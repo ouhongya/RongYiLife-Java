@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.grange.mapper.GrangeImgMapper">
+    <resultMap id="BaseResultMap" type="com.rysh.module.grange.beans.GrangeImg">
+      <id column="id" jdbcType="VARCHAR" property="id" />
+      <result column="url" jdbcType="VARCHAR" property="url" />
+      <result column="status" jdbcType="TINYINT" property="status" />
+      <result column="created_time" jdbcType="TIMESTAMP" property="createdTime" />
+      <result column="lasted_update_time" jdbcType="TIMESTAMP" property="lastedUpdateTime" />
+      <result column="item_id" jdbcType="VARCHAR" property="grangeItemId" />
+    </resultMap>
+
+    <insert id="addImg" useGeneratedKeys="true" keyProperty="id" parameterType="com.rysh.module.grange.beans.GrangeImg">
+        <selectKey keyProperty="id" keyColumn="id" resultType="String" order="BEFORE">
+            select upper(replace(uuid(), '-', ''))
+        </selectKey>
+        insert into grange_img (id, url, item_id,created_time,location) VALUE
+        (#{id},#{url},#{grangeItemId},#{createdTime},#{location})
+    </insert>
+
+    <update id="updateById" parameterType="com.rysh.module.grange.beans.GrangeImg">
+        update farm_item_img set url = #{url},status = #{status} where id = #{id}
+    </update>
+
+    <delete id="dropByItemId">
+        delete from grange_img where item_id = #{farmItemId}
+    </delete>
+
+    <select id="findFarmImgUrlByItemId" parameterType="String" resultType="String">
+        select url from grange_img where item_id=#{itemId} and status = 1
+    </select>
+    <select id="findGrangeBannerImgUrl" resultType="java.lang.String">
+        select url from grange_img where item_id=#{goodsId} and status = 1 and location !=-1
+    </select>
+
+    <select id="findGrangeDetailImgUrl" resultType="java.lang.String">
+        select url from grange_img where item_id=#{goodsId} and status = 1 and location = -1
+    </select>
+
+
+</mapper>

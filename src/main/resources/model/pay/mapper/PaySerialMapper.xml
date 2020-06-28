@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.rysh.module.pay.mapper.PaySerialMapper">
+
+
+    <insert id="addPaySerial">
+        insert into pay_serial (id, orders_id, pay_time, pay_way, ordres_fee, pay_fee, state, cause, created_time, transaction_id)
+        values (#{id},#{ordersId},#{payTime},#{payWay},#{ordresFee},#{payFee},#{state},#{cause},#{createdTime},#{transactionId})
+    </insert>
+    <insert id="addPayOrderError">
+        insert into pay_orders_errors (id, orders_id, transaction_id, trade_time, pay_way)
+        values (#{id},#{ordersId},#{transactionId},#{tradeTime},#{payWay})
+    </insert>
+</mapper>

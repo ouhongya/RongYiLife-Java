@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.store.mapper.StoreCategoryMapper">
+    <resultMap id="BaseResultMap" type="com.rysh.module.store.beans.StoreCategory">
+      <id column="id" jdbcType="VARCHAR" property="id" />
+      <result column="name" jdbcType="VARCHAR" property="name" />
+      <result column="store_id" jdbcType="VARCHAR" property="storeId" />
+      <result column="status" jdbcType="TINYINT" property="status" />
+      <result column="created_time" jdbcType="TIMESTAMP" property="createdTime" />
+      <result column="lasted_update_time" jdbcType="TIMESTAMP" property="lastedUpdateTime" />
+    </resultMap>
+
+    <insert id="insertCategory">
+      <selectKey keyProperty="id" keyColumn="id" resultType="String" order="BEFORE">
+        select upper(replace(uuid(), '-', ''))
+      </selectKey>
+      insert into store_category (id, name, store_id,created_time,status)
+      VALUE (#{id},#{name},#{storeId},#{createdTime},#{status})
+    </insert>
+
+  <select id="findAllAvailableCategory" resultMap="BaseResultMap">
+    select * from store_category where store_id = #{id} and status = 1
+  </select>
+
+  <update id="deleteCategoryById">
+    update store_category set status = -1 where id = #{id} and store_id = #{storeId}
+  </update>
+
+  <select id="findCategoryById" resultMap="BaseResultMap">
+    select * from store_category where id = #{id}
+  </select>
+  <update id="updateNameById">
+    update store_category set name = #{name} where  id  = #{id}
+  </update>
+  <select id="findCategoryByLogin" resultType="com.rysh.module.farm.beans.CategoryInfo">
+    <if test="login == null ">
+      select t1.created_time createdTime,t1.name categoryName,t1.id id,count(t4.id) itemNum
+      from store_category t1 left join store t2 on t1.store_id = t2.id and t1.status = 1 left join server_user t3 on t3.company_id = t2.id left join store_item t4 on t4.category_id = t1.id and t4.status = 1
+      where t3.username = #{id} group by t1.name
+    </if>
+     <if test="login != null ">
+       select t1.created_time createdTime,t1.name categoryName,t1.id id,count(t4.id) itemNum
+       from store_category t1 left join store t2 on t1.store_id = t2.id and t1.status = 1
+       left join store_item t4 on t4.category_id = t1.id and t4.status = 1
+       where t2.id = #{id} group by t1.name
+     </if>
+  </select>
+  <select id="findStoreCategory" resultMap="BaseResultMap">
+   select DISTINCT sc.* from store_item s,store_category sc where s.category_id = sc.id and sc.store_id=#{marketId} and sc.`status` = 1 and s.state=1 and s.status=1
+  </select>
+  <select id="findCategoryByIdToOrders" resultMap="BaseResultMap">
+    select * from store_category where id = #{id}
+  </select>
+
+
+</mapper>

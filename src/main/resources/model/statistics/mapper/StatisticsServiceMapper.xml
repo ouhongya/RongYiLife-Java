@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.statistics.mapper.StatisticsServiceMapper">
+
+    <select id="findUserByTime" resultType="com.rysh.module.statistics.beans.TimeCount">
+        select
+        DATE_FORMAT(created_time,'%Y-%m-%d') time,
+        count(id) count
+        from user
+        where
+        created_time  <![CDATA[ >= ]]> #{startTime}
+        and created_time    <![CDATA[ <= ]]> #{endTime}
+        group by time
+    </select>
+
+    <resultMap id="userDetailMap" type="com.rysh.module.statistics.beans.UserDetail">
+        <result property="community" column="community" />
+        <result property="area" column="area" />
+        <result property="city" column="city" />
+    </resultMap>
+
+    <select id="findUserDetailByTime" resultType="com.rysh.module.statistics.beans.UserDetail">
+        select id id,created_time createdTime,login_name loginName,name name from user where created_time <![CDATA[ >= ]]> #{startTime} and created_time <![CDATA[ <= ]]> #{endTime}
+    </select>
+
+    <select id="findUserCity" resultMap="userDetailMap">
+        select c.name community ,a.area_name area,t.city_name city  from user u,community c,area a,city t
+        where u.community_id = c.id and c.area_id = a.id and a.city_id = t.id and u.id = #{id}
+    </select>
+</mapper>

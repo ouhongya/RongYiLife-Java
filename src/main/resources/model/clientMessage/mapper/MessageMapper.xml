@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.clientMessage.mapper.MessageMapper">
+    <select id="findMessage" resultType="com.rysh.module.clientMessage.beans.Message">
+           <if test="state!=2">
+               select * from message_user where DATE_SUB(CURRENT_DATE(),INTERVAL #{time} DAY) <![CDATA[<=created_time]]> and is_read=#{state} and status = 1 and user_id=#{uid}
+           </if>
+            <if test="state==2">
+                select * from message_user where DATE_SUB(CURRENT_DATE(),INTERVAL #{time} DAY) <![CDATA[<=created_time]]> and status = 1 and user_id=#{uid}
+            </if>
+    </select>
+    <insert id="sendMessage">
+        insert into message_user(id, user_id, content, created_time) values (#{message.id},#{message.userId},#{message.content},#{message.createdTime})
+    </insert>
+    <update id="updateMessageIsRead">
+        update message_user set is_read=1 where id=#{id}
+    </update>
+</mapper>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.rysh.module.farm.mapper.TagMapper">
+
+
+    <insert id="addTag">
+        insert into tag (id, name, operator, created_time) values (#{id},#{name},#{operator},#{createdTime})
+    </insert>
+    <select id="findAllTag" resultType="com.rysh.module.farm.beans.TagResponse">
+        select t.*,count(te.id) count
+        from tag t left join tag_entity te on te.tag_id = t.id where t.status = 1 group by t.id
+    </select>
+    <update id="deleteTag">
+        update tag set status = -1 where id = #{id}
+    </update>
+    <select id="findTagEntityNumById" resultType="int">
+        select count(*) from tag t,tag_entity te
+        where te.tag_id = t.id and t.id = #{id}
+    </select>
+    <select id="findTagByName" resultType="com.rysh.module.farm.beans.Tag">
+        select * from tag where name = #{tagName} and status = 1
+    </select>
+    <update id="updateTag">
+        update tag set name = #{name},operator = #{operator} where id = #{id}
+    </update>
+    <select id="findTagByFarmId" resultType="com.rysh.module.farm.beans.Tag">
+        select t.name
+        from tag t,tag_entity te
+        where te.tag_id = t.id and t.status = 1 and te.entity_id = #{id}
+    </select>
+    <insert id="addTagEntity">
+        insert into tag_entity (id, tag_id, entity_id, belong_type, created_time)
+        VALUES (#{id},#{tagId},#{entityId},#{belongType},#{createdTime})
+    </insert>
+
+    <delete id="deleteTagEntityByEntityId">
+        delete from tag_entity where entity_id = #{entityId}
+    </delete>
+</mapper>

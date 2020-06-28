@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.rysh.module.activity.mapper.RankMapper">
+
+    <insert id="addRank">
+        insert into ranking_user (id, url, intro, created_time, operator) VALUES
+        (#{id},#{url},#{intro},#{createdTime},#{operator})
+    </insert>
+    <insert id="addRankItem">
+        insert into ranking_user_item (id, sequence, name, url, ranking_user_id, created_time, status) VALUES
+        (#{id},#{sequence},#{name},#{url},#{rankingUserId},#{createdTime},#{status})
+    </insert>
+    <update id="expiredRank">
+        update ranking_user set status = 0,operator = #{operator} where status = 1
+    </update>
+    <update id="expiredRankItem">
+        update ranking_user_item set status = 0 where status = 1
+    </update>
+    <select id="findAllRank" resultType="com.rysh.module.activity.beans.Rank">
+        select * from ranking_user
+    </select>
+    <select id="findRankItemByRankId" resultType="com.rysh.module.activity.beans.ClientRank">
+        select ri.sequence no,ri.name name,ri.url avatar,r.url banner,r.intro introduction
+        from ranking_user_item ri left join ranking_user r on ri.ranking_user_id = r.id
+        where ranking_user_id = #{id}
+    </select>
+</mapper>

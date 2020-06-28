@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.serverOrders.mapper.BackGroundOrdersMapper">
+    <resultMap id="ordersSplitList" type="com.rysh.module.clientOrders.beans.OrdersSplit">
+        <id property="id" column="id"/>
+        <result property="ordersId" column="orders_id"/>
+        <result property="state" column="state"/>
+        <result property="freight" column="freight"/>
+        <result property="usedSorce" column="used_sorce"/>
+        <result property="marketId" column="shop_id"/>
+        <result property="discountRate" column="discount_rate"/>
+        <result property="realPlay" column="real_play"/>
+        <result property="belongType" column="belong_type"/>
+        <result property="createdTime" column="created_time"/>
+    </resultMap>
+
+    <select id="findOrdersByCompanyId" parameterType="com.rysh.module.serverOrders.beans.CompanyIdAndState" resultMap="ordersSplitList">
+        select * from orders_split where shop_id=#{companyId} and state = #{state} and status = 1 order by created_time desc
+    </select>
+    <select id="findAllOrdersByCompanyId" resultMap="ordersSplitList">
+        select * from orders_split where shop_id=#{companyId} and status = 1 order by created_time desc
+    </select>
+    <select id="findOrdersByLikeAgainByCompanyId" resultMap="ordersSplitList">
+        select os.* from orders_split os,orders o,user u where os.orders_id=o.id and o.user_id=u.id and os.status = 1 and o.status = 1 and os.shop_id=#{companyId}
+        <if test="totalState==1">
+            and (o.ordres_num like "%"#{search}"%")
+        </if>
+        <if test="totalState==2">
+            and (u.login_name like "%"#{search}"%")
+        </if>
+         order by created_time desc
+    </select>
+    <select id="findOrdersByCreatedTime" resultMap="ordersSplitList">
+        select * from orders_split where shop_id=#{companyId} and created_time &lt; #{endTime} and created_time &gt;= #{startTime} and status = 1 order by created_time desc
+    </select>
+</mapper>

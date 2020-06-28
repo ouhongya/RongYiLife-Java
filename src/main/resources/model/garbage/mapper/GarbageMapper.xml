@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.garbage.mapper.GarbageMapper">
+  <resultMap id="BaseResultMap" type="com.rysh.module.garbage.beans.Garbage">
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="category_id" jdbcType="VARCHAR" property="categoryId" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="created_time" jdbcType="TIMESTAMP" property="createdTime" />
+    <result column="lasted_update_time" jdbcType="TIMESTAMP" property="lastedUpdateTime" />
+    <result column="status" jdbcType="TINYINT" property="status" />
+  </resultMap>
+    <insert id="add" useGeneratedKeys="true" keyProperty="id" parameterType="com.rysh.module.garbage.beans.Garbage">
+      <selectKey keyProperty="id" keyColumn="id" resultType="String" order="BEFORE">
+        select upper(replace(uuid(), '-', ''))
+      </selectKey>
+       insert into garbage (id, category_id, name, created_time)
+       values (#{id},#{categoryId},#{name},#{createdTime})
+    </insert>
+  <update id="deleteById">
+    update garbage set status = -1 where id = #{id}
+  </update>
+  <update id="update">
+    update garbage set name=#{name} where id = #{id}
+  </update>
+
+  <select id="findAll" resultMap="BaseResultMap">
+    <if test="operation != null and operation != '' and operation == 'active' ">
+        select distinct t1.* from
+        garbage t1,garbage_category t2,city t3
+        where t1.category_id = t2.id and t2.city_id = t3.id and t3.id=#{city} and t2.id=#{category} and t1.status = 1 and t2.status = 1
+        and t1.name like CONCAT('%',#{search},'%')
+    </if>
+     <if test="operation != null and operation != '' and operation == 'inactive' ">
+       select distinct t1.* from
+       garbage t1,garbage_category t2,city t3
+       where t1.category_id = t2.id and t2.city_id = t3.id and t3.id=#{city} and t2.id=#{category} and t1.status = 1 and t2.status = 1
+     </if>
+  </select>
+
+  <select id="isExist" resultType="integer">
+    select * from
+    city t1,garbage_category t2,garbage t3
+    where t2.city_id = t1.id
+    and t3.category_id = t2.id
+    and t1.id = #{city}
+    and t2.id = #{category}
+    and t3.name = #{name}
+  </select>
+    <select id="findGarbageByCategoryId" resultMap="BaseResultMap">
+      select * from garbage where category_id=#{categoryId} and status = 1
+    </select>
+  <select id="searchLeSe" resultType="com.rysh.module.clientLeSeClass.beans.SuperLeSe">
+    select gc.`name` as categoryName ,g.id as id,g.name as name from garbage_category gc
+    LEFT JOIN garbage g on g.category_id=gc.id
+    where city_id=#{id} and g.`status` = 1 and gc.`status` = 1
+    <if test="search != null and search != ''">
+      and (g.name like "%"#{search}"%")
+    </if>
+  </select>
+
+</mapper>

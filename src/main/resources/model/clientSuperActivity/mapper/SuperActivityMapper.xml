@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.clientSuperActivity.mapper.SuperActivityMapper">
+
+    <select id="findSuperActivity" resultType="com.rysh.module.activity.beans.ActivityVo">
+        select a.* from activity a left join area aa on aa.id=a.area_id left join city c on aa.city_id = c.id  where a.status = 1
+        <if test="areaId != null and areaId != ''">
+            and a.area_id=#{areaId}
+        </if>
+        <if test="cityId != null and cityId != ''">
+            and c.id=#{cityId}
+        </if>
+         <if test="search != null and search != ''">
+             and (a.name like "%"#{search}"%" or a.location like "%"#{search}"%" or a.publisher_unit like "%"#{search}"%" )
+         </if>
+          order by created_time desc
+    </select>
+    <select id="findActivityCoverImg" resultType="java.lang.String">
+        select url from activity_img where activity_id=#{id} and location=0 and status = 1
+    </select>
+    <select id="findActivityBannerImgs" resultType="java.lang.String">
+        select url from activity_img where activity_id=#{id} and location!=0 and status = 1 order by location desc
+    </select>
+    <insert id="addActivityUser">
+        insert into activity_user (id, user_id, activity_id, name, phone, created_time) values (#{id},#{uid},#{activityId},#{name},#{phone},#{date})
+    </insert>
+    <select id="findActivityUser" resultType="java.lang.String">
+        select id from activity_user where user_id=#{uid} and activity_id=#{activityId}
+    </select>
+    <select id="findActivityCity" resultType="com.rysh.module.community.beans.City">
+        select * from city where id in (select DISTINCT city_id from area where id in (select DISTINCT area_id from activity ))
+    </select>
+    <select id="findActivityArea" resultType="com.rysh.module.community.beans.Area">
+        select * from area where id in (select DISTINCT area_id from activity where area_id in (select id from area where city_id=#{cityId}))
+    </select>
+    <select id="findActivityById" resultType="com.rysh.module.activity.beans.ActivityVo">
+        select * from activity where id=#{activityId} and status = 1
+    </select>
+    <select id="countActivityUserByActivityId" resultType="java.lang.Integer">
+        select count(*) from activity_user where activity_id=#{activityId} and status = 1
+    </select>
+    <select id="findActivityContentByActivityId" resultType="com.rysh.module.activity.beans.ActivityContent">
+        select * from activity_content where activity_id=#{id}  order by queue asc
+    </select>
+
+
+</mapper>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.statistics.mapper.ActivityStatisticsMapper">
+
+    <select id="findActivityByTime" resultType="com.rysh.module.statistics.beans.TimeCount">
+        select
+        DATE_FORMAT(start_time,'%Y-%m-%d') time,
+        count(id) count
+        from activity
+        where
+        status != -1
+        and start_time   <![CDATA[ >= ]]>  #{startTime}
+        and start_time  <![CDATA[ <= ]]>  #{endTime}
+        group by time
+    </select>
+    <select id="findActivityDetailByTime" resultType="com.rysh.module.statistics.beans.ActivityDetail">
+        select
+        A.created_time createdTime,A.id id,A.name name,A.publisher publishPerson,A.publisher_unit publishUnit,A.contact_num phone,ai.url cover,IFNULL(B.joined,0) joinNum
+        from (select * from activity) as A
+        left join
+        (select activity_id,count(id) as joined from activity_user group by activity_id) as B
+        on A.id = B.activity_id left join activity_img ai on ai.activity_id = A.id and ai.location = 0
+        where
+        A.start_time    <![CDATA[ >= ]]>   #{startTime}
+        and A.start_time   <![CDATA[ <= ]]>   #{endTime}
+        and A.status != -1
+        group by B.activity_id
+    </select>
+    <select id="findActivityContent" resultType="com.rysh.module.statistics.beans.ActivityContent">
+        select content,queue from activity_content where activity_id = #{id}
+    </select>
+    
+    <resultMap id="joinUserMap" type="com.rysh.module.statistics.beans.JoinedUser" >
+        <result property="joinedTime" column="joinedTime" />
+        <result property="name" column="name" />
+        <result property="phone" column="phone" />
+    </resultMap>
+    <select id="findActivityJoinUserById" resultType="com.rysh.module.statistics.beans.JoinedUser">
+        select created_time joinedTime,name name,phone phone from activity_user where activity_id = #{id}
+    </select>
+    <select id="findActivityNameById" resultType="java.lang.String">
+        select name from activity where id = #{id}
+    </select>
+</mapper>

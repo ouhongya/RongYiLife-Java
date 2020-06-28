@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.rysh.module.community.mapper.CommunityMapper">
+
+    <resultMap id="communityMap" type="com.rysh.module.community.beans.Community">
+        <result property="id" column="id" />
+        <result property="name" column="name" />
+        <result property="createdTime" column="created_time" />
+        <result property="lastedUpdateTime" column="lasted_update_time" />
+        <result property="areaId" column="area_id" />
+        <result property="address" column="address" />
+        <result property="status" column="status" />
+    </resultMap>
+
+    <insert id="addCommunity" useGeneratedKeys="true" keyProperty="id" parameterType="com.rysh.module.community.beans.Community">
+        <selectKey keyProperty="id" keyColumn="id" resultType="String" order="BEFORE">
+            select upper(replace(uuid(), '-', ''))
+        </selectKey>
+        insert into community (`id`,`name`,`created_time`,`address`,`area_id`) value (#{id},#{name},#{createdTime},#{address},#{areaId})
+    </insert>
+
+    <select id="findAllByAreaName" resultType="String">
+        select * from community where status = 1 and area_id = #{areaName}
+    </select>
+
+    <select id="findUserCommunityByAddressId" resultType="java.lang.String" parameterType="String">
+        select name from community where id in (
+            select `community_id` from community_detail where id = #{addressId}
+        )
+    </select>
+
+    <select id="findAll" resultMap="communityMap">
+        select * from community where status =1
+    </select>
+
+    <update id="updateCommunity" parameterType="com.rysh.module.community.beans.Community">
+        update community set name=#{name},address = #{address} where id=#{id}
+    </update>
+
+    <select id="findById" resultType="com.rysh.module.community.beans.CommunityResponse">
+        select t1.id id,t1.name communityName,t1.address address,t2.id areaName,t3.id CityName
+        from community t1 left join area t2 on t1.area_id = t2.id left join city t3  on t3.id=t2.city_id
+        where t1.id = #{id} and t1.status = 1
+    </select>
+
+    <insert id="insertCommunity">
+        <selectKey keyProperty="id" keyColumn="id" resultType="String" order="BEFORE">
+            select upper(replace(uuid(), '-', ''))
+        </selectKey>
+        insert into community (`id`,`name`,`created_time`,`address`,area_id) value (#{id},#{name},#{createdTime},#{address},#{areaId})
+    </insert>
+
+    <update id="deleteCommunity" parameterType="String">
+        update community set status=-1 where id=#{communityId}
+    </update>
+
+    <select id="findCommunityById" parameterType="String" resultMap="communityMap">
+        select * from community where id=#{id} and status =1
+    </select>
+    <select id="findAllByAreaId" resultType="com.rysh.module.community.beans.ClientCommunity">
+        select id id,name name from community where area_id = #{areaId}
+    </select>
+</mapper>

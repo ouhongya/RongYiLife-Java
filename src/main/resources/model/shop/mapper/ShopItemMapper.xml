@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.shop.mapper.ShopItemMapper">
+  <resultMap id="BaseResultMap" type="com.rysh.module.shop.beans.ShopItem">
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="category_id" jdbcType="VARCHAR" property="categoryId" />
+    <result column="state" jdbcType="TINYINT" property="state" />
+    <result column="status" jdbcType="TINYINT" property="status" />
+    <result column="oprerator" jdbcType="VARCHAR" property="oprerator" />
+    <result column="created_time" jdbcType="TIMESTAMP" property="createdTime" />
+    <result column="lasted_update_time" jdbcType="TIMESTAMP" property="lastedUpdateTime" />
+    <result column="pass" jdbcType="TINYINT" property="pass" />
+    <result column="pass_operator" jdbcType="VARCHAR" property="passOperator" />
+    <result column="pass_time" jdbcType="TIMESTAMP" property="passTime" />
+    <result column="pass_comment" jdbcType="VARCHAR" property="passComment" />
+  </resultMap>
+
+  <resultMap id="checkMap" type="com.rysh.module.shop.beans.ShopParam" >
+    <id column="id" property="id" />
+    <result column="name" property="name" />
+    <result column="description" property="description" />
+    <result column="categotyName" property="categoryId" />
+    <association property="spec" javaType="com.rysh.module.shop.beans.ShopSpec">
+      <result column="price" property="price" />
+      <result column="unit" property="unit" />
+    </association>
+    <collection property="imgUrls" ofType="com.rysh.module.shop.beans.ShopImg">
+      <result column="url" property="url" />
+      <result column="location" property="location" />
+    </collection>
+  </resultMap>
+
+  <resultMap id="responseMap" type="com.rysh.module.shop.beans.ShopParam" >
+    <id column="id" property="id" />
+    <result column="name" property="name" />
+    <result column="description" property="description" />
+    <result column="category_id" property="categoryId" />
+    <association property="spec" javaType="com.rysh.module.shop.beans.ShopSpec">
+      <result column="price" property="price" />
+      <result column="unit" property="unit" />
+    </association>
+    <collection property="imgUrls" ofType="com.rysh.module.shop.beans.ShopImg">
+      <result column="url" property="url" />
+      <result column="location" property="location" />
+    </collection>
+  </resultMap>
+
+  <insert id="insertNew">
+    insert into shop_item
+    (id, name, description,category_id, status,state, oprerator, created_time,pass)
+    value (#{id},#{name},#{description},#{categoryId},#{status},#{state},#{oprerator},#{createdTime},#{pass})
+  </insert>
+
+  <select id="findUncheck" resultMap="checkMap">
+    select t1.id,t1.name,t1.description,t2.url,t2.location,t3.name categotyName,t4.price,t4.unit
+    from shop_item t1 left join shop_img t2 on t2.item_id = t1.id left join shop_category t3 on t3.id = t1.category_id left join shop_spec t4 on t4.item_id = t1.id
+    where t1.pass = 0 and t1.status = 1
+  </select>
+
+  <update id="updateSattus">
+    update shop_item set status = -1 ,oprerator = #{operator} where id = #{id}
+  </update>
+
+  <update id="updateManyById">
+    <if test="operation != null and operation != '' and operation == 'pass'">
+      update shop_item set pass_operator=#{operator}, pass = 1,state = 1,pass_time=#{passTime},pass_comment=#{passComment},oprerator = #{operator} where status = 1 and id in
+      <foreach collection="ids" item="id" open="(" separator="," close=")" >
+        #{id}
+      </foreach>
+    </if>
+    <if test="operation != null and operation != '' and operation == 'fail'">
+      update shop_item set pass_operator=#{operator}, pass = -1,state = 0,pass_time=#{passTime},pass_comment=#{passComment},oprerator = #{operator} where status = 1 and id in
+      <foreach collection="ids" item="id" open="(" separator="," close=")" >
+        #{id}
+      </foreach>
+    </if>
+  </update>
+  <select id="findByCondition" resultType="com.rysh.module.shop.beans.ShopItemView">
+    select si.*,sg.url img,sc.name category,sp.price,sp.unit,si.default_sort sort
+    from shop_item si left join shop_img sg on sg.item_id = si.id and sg.location = 1
+    left join shop_category sc on si.category_id = sc.id
+    left join shop_spec sp on sp.item_id = si.id
+    where si.status != -1
+    <!--查询分类-->
+    <if test="category == 'bct' ">
+      and category_id = '6955EBF1EF3411E999A300163E01543F'
+    </if>
+    <if test="category == 'mgj' ">
+      and category_id = '100F76A0EE6411E999A300163E01543F'
+    </if>
+    <if test="category == 'sfxz' ">
+      and category_id = '57DFBD81F19111E999A300163E01543F'
+    </if>
+    <if test="category == 'gsh' ">
+      and category_id = '7786FE31005A11EA99A300163E01543F'
+    </if>
+    <!--查询状态-->
+    <if test="search == 'up' ">
+      and si.state = 1
+    </if>
+    <if test="search == 'down' ">
+      and si.state = -1
+    </if>
+    <if test="search == 'init' ">
+      and si.pass = 0
+    </if>
+    <if test="search == 'fail' ">
+      and si.pass = -1
+    </if>
+    order by si.default_sort desc
+  </select>
+  <select id="findById" resultMap="responseMap">
+    select t1.id, t1.name,t1.description,t1.category_id,t2.url,t2.location,t3.price,t3.unit
+    from shop_item t1,shop_img t2,shop_spec t3
+    where t1.id = t2.item_id and t1.id = t3.item_id and t1.id = #{id}
+  </select>
+  <update id="updateItem">
+    update shop_item set name = #{name},category_id = #{categoryId}, pass = #{pass},
+    oprerator = #{oprerator},description = #{description} where id = #{id}
+  </update>
+  <update id="itemUpOrDownShelf">
+    update shop_item set oprerator=#{operator},
+    <if test="operation != null and operation == 'up'">
+      state = 1
+    </if>
+    <if test="operation != null and operation == 'down'">
+      state = -1
+    </if>
+    where status = 1 and pass = 1 and id in
+    <foreach collection="ids" item="id" open="(" separator="," close=")" >
+      #{id}
+    </foreach>
+  </update>
+  <select id="findCountByShopId" resultType="int">
+    select count(id)
+    from shop_item where category_id = #{categoryId} and status = 1
+  </select>
+  <select id="findUncheckById" resultMap="checkMap">
+    select t1.id,t1.name,t1.description,t2.url,t2.location,t3.name categotyName,t4.price,t4.unit
+    from shop_item t1 left join shop_img t2 on t2.item_id = t1.id left join shop_category t3 on t3.id = t1.category_id left join shop_spec t4 on t4.item_id = t1.id
+    where t1.pass = 0 and t1.id = #{id}
+  </select>
+  <update id="deleteById">
+    update shop_item set status = -1 where id = #{id}
+  </update>
+
+  <select id="findCheckHistory" resultType="com.rysh.module.shop.beans.ShopItemView">
+    <if test="search != null and search != '' and search == 'default'">
+      select name,description,pass_operator passOperator,pass_time passTime,pass_comment passComment,pass pass from shop_item where pass_operator is not null and status = 1
+    </if>
+    <if test="search != null and search != '' and search == 'pass'">
+      select name,description,pass_operator passOperator,pass_time passTime,pass_comment passComment,pass pass from shop_item where pass_operator is not null and status = 1 and pass = 1
+    </if>
+    <if test="search != null and search != '' and search == 'fail'">
+      select name,description,pass_operator passOperator,pass_time passTime,pass_comment passComment,pass pass from shop_item where pass_operator is not null and status = 1 and pass = -1
+    </if>
+  </select>
+    <select id="findShopItemById" parameterType="String" resultMap="BaseResultMap">
+        select * from shop_item where id=#{itemId} and status = 1
+    </select>
+  <select id="findShopItemByIdPlus" parameterType="String" resultMap="BaseResultMap">
+    select * from shop_item where id=#{itemId} and status = 1
+  </select>
+    <select id="findShopItemByIdToOrders" resultMap="BaseResultMap">
+      select * from shop_item where id=#{itemId}
+    </select>
+  <update id="updateSort">
+    update shop_item set default_sort = #{sort} where id = #{id}
+  </update>
+</mapper>

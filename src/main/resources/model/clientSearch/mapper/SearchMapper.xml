@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.clientSearch.mapper.SearchMapper">
+
+    <resultMap id="BaseResultMap" type="com.rysh.module.farm.beans.Farm">
+        <id column="id" jdbcType="VARCHAR" property="id" />
+        <result column="name" jdbcType="VARCHAR" property="name" />
+        <result column="address" jdbcType="VARCHAR" property="address" />
+        <result column="score" jdbcType="INTEGER" property="score" />
+        <result column="created_time" jdbcType="TIMESTAMP" property="createdTime" />
+        <result column="lasted_update_time" jdbcType="TIMESTAMP" property="lastedUpdateTime" />
+    </resultMap>
+
+    <select id="freeSearch" resultType="com.rysh.module.commonService.beans.ShopBean">
+        select f.* from (select DISTINCT  f.* from ${tableName} f
+        LEFT JOIN area a on f.area_id=a.id
+        LEFT JOIN city c on a.city_id=c.id
+        LEFT JOIN tag_entity te on te.entity_id=f.id
+        where f.status = 1
+         <if test="search != null and search != ''">
+             and (f.name like concat('%',#{search},'%') or f.address like concat('%',#{search},'%') or f.intro like concat('%',#{search},'%'))
+         </if>
+          <if test="tagId != null and tagId != ''">
+              and te.tag_id=#{tagId}
+          </if>
+         <if test="cityId != null and cityId != ''">
+             and c.id=#{cityId}
+         </if>
+          <if test="areaId != null and areaId != ''">
+              and a.id=#{areaId}
+          </if>
+         ) f
+         <if test="state==0">
+            order by f.default_sort desc
+         </if>
+         <if test="state==1">
+             LEFT JOIN (select ROUND(AVG(su.score),1) a,os.shop_id s from score_user su,orders_split os where su.orders_split_id=os.id GROUP BY os.shop_id
+             ) s on f.id=s.s ORDER BY s.a asc
+         </if>
+        <if test="state==2">
+            LEFT JOIN (select ROUND(AVG(su.score),1) a,os.shop_id s from score_user su,orders_split os where su.orders_split_id=os.id GROUP BY os.shop_id
+            ) s on f.id=s.s ORDER BY s.a desc
+        </if>
+         <if test="state==3">
+             LEFT JOIN (select COUNT(*) s,os.shop_id d from orders_split os where status = 1  GROUP BY os.shop_id) a on f.id=a.d ORDER BY a.s asc
+         </if>
+        <if test="state==4">
+            LEFT JOIN (select COUNT(*) s,os.shop_id d from orders_split os where status = 1  GROUP BY os.shop_id) a on f.id=a.d ORDER BY a.s desc
+        </if>
+    </select>
+    <select id="searchFarmItem" resultType="com.rysh.module.farm.beans.FarmItem">
+        select fi.* from farm_category fc
+        LEFT JOIN farm_item fi on fc.id=fi.category_id
+        LEFT JOIN farm_spec fs on fs.item_id=fi.id
+        LEFT JOIN (
+        SELECT
+        count(*) s,
+        oi.product_item_id pid
+        FROM
+        orders_item oi
+        LEFT JOIN orders_split os on oi.orders_split_id=os.id
+        where os.`status` = 1
+        GROUP BY
+        product_item_id
+        ) a on fi.id=a.pid
+        where fi.`status`=1 and fi.pass=1 and fi.state = 1 and fc.farm_id=#{marketId}
+        <if test="categoryId != null and categoryId != ''">
+            and fc.id=#{categoryId}
+        </if>
+        <if test="search != null and search != ''">
+             and (fi.name like concat('%',#{search},'%') or fi.description like concat('%',#{search},'%') or fc.`name` like concat('%',#{search},'%'))
+        </if>
+        <if test="state ==1">
+            order by fi.created_time desc
+        </if>
+         <if test="state==2">
+            ORDER BY a.s desc
+         </if>
+        <if test="state==3">
+             ORDER BY a.s asc
+        </if>
+         <if test="state==4">
+               order by  fs.price desc
+         </if>
+        <if test="state==5">
+            order by  fs.price asc
+        </if>
+    </select>
+
+    <select id="searchGrangeItem" resultType="com.rysh.module.grange.beans.GrangeItem">
+        select gi.* from grange_category gc
+        LEFT JOIN grange_item gi on gc.id=gi.category_id
+        LEFT JOIN grange_spec gs on gs.item_id=gi.id
+        LEFT JOIN (
+        SELECT
+        count(*) s,
+        oi.product_item_id pid
+        FROM
+        orders_item oi
+        LEFT JOIN orders_split os on oi.orders_split_id=os.id
+        where os.`status` = 1
+        GROUP BY
+        product_item_id
+        ) a on gi.id=a.pid
+        where gi.`status`=1 and gi.pass=1 and gi.state = 1 and gc.grange_id=#{marketId}
+        <if test="categoryId != null and categoryId != ''">
+            and gc.id=#{categoryId}
+        </if>
+        <if test="search != null and search != ''">
+            and (gi.name like concat('%',#{search},'%') or gi.description like concat('%',#{search},'%') or gc.`name` like concat('%',#{search},'%'))
+        </if>
+        <if test="state ==1">
+            order by gi.created_time desc
+        </if>
+        <if test="state==2">
+            ORDER BY a.s desc
+        </if>
+        <if test="state==3">
+            ORDER BY a.s asc
+        </if>
+        <if test="state==4">
+            order by  gs.price desc
+        </if>
+        <if test="state==5">
+            order by  gs.price asc
+        </if>
+    </select>
+    <select id="searchShopItem" resultType="com.rysh.module.shop.beans.ShopItem">
+        select si.* from shop_item si
+        LEFT JOIN shop_spec ss on ss.item_id=si.id
+        LEFT JOIN shop_category sc on sc.id=si.category_id
+        LEFT JOIN(
+        SELECT
+        count(*) s,
+        oi.product_item_id pid
+        FROM
+        orders_item oi
+        LEFT JOIN orders_split os on oi.orders_split_id=os.id
+        where os.`status` = 1
+        GROUP BY
+        product_item_id
+        ) a on si.id=a.pid
+        where si.status = 1 and si.pass=1 and si.state=1
+        <if test="categoryId != null and categoryId != ''">
+            and si.category_id=#{categoryId}
+        </if>
+        <if test="paramBean.search != null and paramBean.search != ''">
+            and (si.name like concat('%',#{paramBean.search},'%') or si.description like concat('%',#{paramBean.search},'%') or sc.`name` like concat('%',#{paramBean.search},'%'))
+        </if>
+        <if test="state==1">
+            order by si.created_time desc
+        </if>
+        <if test="state==2">
+            ORDER BY a.s desc
+        </if>
+        <if test="state==3">
+            ORDER BY a.s asc
+        </if>
+        <if test="state==4">
+            ORDER BY ss.price desc
+        </if>
+        <if test="state==5">
+            ORDER BY ss.price asc
+        </if>
+
+    </select>
+
+    <select id="searchStoreItem" resultType="com.rysh.module.store.beans.StoreItem">
+        select si.* from store_item si
+        LEFT JOIN store_category sc on si.category_id=sc.id
+        LEFT JOIN store_spec ss  on ss.item_id=si.id
+        LEFT JOIN store s on sc.store_id=s.id
+        LEFT JOIN (
+        SELECT
+        count(*) s,
+        oi.product_item_id pid
+        FROM
+        orders_item oi
+        GROUP BY
+        product_item_id
+        ) a on si.id=a.pid
+        where si.status = 1 and si.pass=1 and si.state = 1 and s.id=#{marketId}
+        <if test="search != null and search != ''">
+         and (si.`name` like concat('%',#{search},'%') or si.description like concat('%',#{search},'%') or sc.`name` like concat('%',#{search},'%'))
+        </if>
+         <if test="categoryId != null and categoryId != ''">
+             and si.category_id=#{categoryId}
+         </if>
+          <if test="state==1">
+              order by si.created_time desc
+          </if>
+        <if test="state==2">
+            order by a.s desc
+        </if>
+        <if test="state==3">
+            order by a.s asc
+        </if>
+        <if test="state==4">
+            order by ss.price desc
+        </if>
+        <if test="state==5">
+            order by ss.price asc
+        </if>
+    </select>
+    <select id="searchStore" resultType="com.rysh.module.serverSystem.beans.Store">
+        select f.*
+        from (select DISTINCT  s.*,s.contact_num as tel from store s LEFT JOIN community_store c on c.store_id=s.id  LEFT JOIN store_tag_entity ste on ste.store_id =s.id LEFT JOIN store_tag st on st.id=ste.store_tag_id  where s.id=c.store_id and c.community_id=#{communityId}  and s.status=1
+
+        <if test="tagId != null and tagId != '' ">
+            and st.id=#{tagId}
+        </if>
+        <if test="search != null and search != ''">
+            and (s.name like concat('%',#{search},'%') or s.address like concat('%',#{search},'%'))
+        </if>
+        ) f
+        <if test="state==1">
+            LEFT JOIN (select ROUND(AVG(su.score),1) a,os.shop_id s from score_user su,orders_split os where su.orders_split_id=os.id GROUP BY os.shop_id
+            ) s on f.id=s.s ORDER BY s.a asc
+        </if>
+        <if test="state==2">
+            LEFT JOIN (select ROUND(AVG(su.score),1) a,os.shop_id s from score_user su,orders_split os where su.orders_split_id=os.id GROUP BY os.shop_id
+            ) s on f.id=s.s ORDER BY s.a desc
+        </if>
+        <if test="state==3">
+            LEFT JOIN (select COUNT(*) s,os.shop_id d from orders_split os where status = 1  GROUP BY os.shop_id) a on f.id=a.d ORDER BY a.s asc
+        </if>
+        <if test="state==4">
+            LEFT JOIN (select COUNT(*) s,os.shop_id d from orders_split os where status = 1  GROUP BY os.shop_id) a on f.id=a.d ORDER BY a.s desc
+        </if>
+    </select>
+    <select id="findAllShopBanner" resultType="com.rysh.module.clientSearch.beans.Banner">
+          select id,url as img from shop_album where status = 1 order by location asc
+    </select>
+    <select id="findAllShopCategory" resultType="com.rysh.module.clientSearch.beans.Type">
+        select * from shop_category where status = 1 and id !=#{shopId}  order by types
+    </select>
+    <select id="findConvenientCommunityType" resultType="com.rysh.module.clientSearch.beans.Type">
+        select * from shop_category where status = 1 and types=0
+    </select>
+    <select id="findStoreTagByCommunityId" resultType="com.rysh.module.store.beans.StoreTag">
+    select st.* from store s,community_store cs,store_tag_entity ste,store_tag st
+    where s.id=cs.store_id and ste.store_id=s.id and ste.store_tag_id = st.id and cs.community_id=#{communityId} and st.status = 1
+    </select>
+    <select id="searchAllGoods" resultType="com.rysh.module.clientSearch.beans.ProductItem">
+        select f.*,f.id as itemId from((select * from farm_item where status = 1)
+        UNION
+        (select * from grange_item where status = 1)
+        UNION
+        (select sis.* from store_item sis,store_category sc,store s,community_store cs  where sis.category_id=sc.id and sc.store_id=s.id and cs.store_id=s.id and cs.community_id=#{communityId})
+        UNION
+        (select id,name,description,category_id,`state`,status,oprerator,created_time,lasted_update_time,pass,pass_operator,pass_time,pass_comment from shop_item where status = 1))  f
+        where  f.status = 1 and (f.name like "%"#{search}"%" or f.description like "%"#{search}"%")
+    </select>
+
+
+</mapper>

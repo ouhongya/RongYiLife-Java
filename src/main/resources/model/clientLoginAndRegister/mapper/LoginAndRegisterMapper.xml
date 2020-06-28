@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.clientLoginRegister.mapper.LoginAndRegisterMapper">
+    <resultMap id="UserList" type="com.rysh.module.clientLoginRegister.beans.User">
+        <id property="id" column="id" />
+        <result property="loginName" column="login_name" />
+        <result property="name" column="name" />
+        <result property="communityId" column="community_id" />
+        <result property="avatar" column="avatar" />
+        <result property="score" column="score" />
+        <result property="createdTime" column="created_time" />
+    </resultMap>
+
+    <select id="findUserByPhoneNum" parameterType="String" resultMap="UserList">
+        select * from user where login_name =#{loginName} and status = 1
+    </select>
+
+    <insert id="addUser" parameterType="com.rysh.module.clientLoginRegister.beans.User" >
+        insert into user (id,login_name,score,created_time) values (#{id},#{loginName},#{score},#{createdTime})
+    </insert>
+
+    <select id="findNowUser" parameterType="String" resultMap="UserList">
+        select * from user where id=#{uid} and status = 1
+    </select>
+
+    <update id="updateUserById" parameterType="com.rysh.module.clientLoginRegister.beans.User">
+        update user set status = 1
+         <if test="name != null and name != ''">
+             , name=#{name}
+         </if>
+          <if test="communityId != null and communityId != ''">
+              ,community_id=#{communityId}
+          </if>
+           <if test="avatar != null and avatar != ''">
+               ,avatar=#{avatar}
+           </if>
+         where id=#{id} and status = 1
+    </update>
+    <select id="findCityIdByUserId" resultType="java.lang.String">
+        select c3.id from user u inner join community c2 on u.community_id = c2.id inner join area a on c2.area_id = a.id inner join
+        city c3 on a.city_id = c3.id where u.id = #{userId}
+    </select>
+    <update id="updateUserAvatar">
+        update user set avatar=#{url} where id=#{uid} and status = 1
+    </update>
+</mapper>

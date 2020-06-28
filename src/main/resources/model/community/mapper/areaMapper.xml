@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.rysh.module.community.mapper.AreaMapper">
+    <insert id="addArea" useGeneratedKeys="true" keyProperty="id" parameterType="com.rysh.module.community.beans.Area">
+        <selectKey keyProperty="id" keyColumn="id" resultType="String" order="BEFORE">
+            select upper(replace(uuid(), '-', ''))
+        </selectKey>
+        insert into area (`id`,`area_name`,`created_time`,`city_id`) value (#{id},#{areaName},#{createdTime},#{cityId})
+    </insert>
+
+    <resultMap id="areaList" type="com.rysh.module.community.beans.Area">
+        <result property="id" column="id"/>
+        <result property="areaName" column="area_name"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="lastedUpdateTime" column="lasted_update_time"/>
+        <result property="cityId" column="city_id"/>
+        <result property="areaCode" column="area_code" />
+    </resultMap>
+
+
+
+    <select id="checkHasExist" resultMap="areaList" parameterType="String">
+        select *
+        from
+            area t1 , (select id from city where city_name = #{cityName}) t2
+        where
+              t1.area_name = #{areaName} and t1.city_id = t2.id
+    </select>
+
+    <select id="findIdByName" resultType="java.lang.String">
+        select `id` from area where `area_name` = #{areaName}
+    </select>
+
+    <select id="findUserAreaByAddressId" resultType="java.lang.String" parameterType="String">
+        select `area_name` from area where id in (
+            select `area_id` from community where id in (
+                select `community_id` from community_detail where id = #{addressId}
+            )
+        )
+    </select>
+
+    <update id="updateAreaName" parameterType="String">
+        update area set area_name = #{areaName} where id = #{id}
+    </update>
+    <select id="findAllByCityId" resultType="com.rysh.module.community.beans.ClientArea">
+        SELECT DISTINCT area.id id, area.area_name name FROM community
+        INNER JOIN area ON area.id = community.area_id
+        INNER JOIN city ON city.id = area.city_id
+        where area.city_id = #{id}
+    </select>
+
+    <select id="findAreaById" parameterType="String" resultMap="areaList">
+        select * from area where id=#{areaId}
+    </select>
+    <select id="findAreaByCityId" resultMap="areaList">
+        select * from area where city_id = #{cityId}
+    </select>
+
+</mapper>

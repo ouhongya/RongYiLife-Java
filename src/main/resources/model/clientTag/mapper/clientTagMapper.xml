@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.clientTag.mapper.ClientTagMapper">
+
+    <select id="findAllTag" resultType="com.rysh.module.clientTag.beans.ClientTag">
+        select * from tag where status=1
+    </select>
+</mapper>

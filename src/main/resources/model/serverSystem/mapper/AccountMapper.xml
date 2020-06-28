@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.serverSystem.mapper.AccountMapper">
+    <resultMap id="AUser" type="com.rysh.module.serverSystem.beans.User">
+        <result column="id" property="id"></result>
+        <result column="username" property="username"></result>
+        <result column="password" property="password"></result>
+        <result column="created_time" property="createdTime"></result>
+        <result column="lasted_update_time" property="lastedUpdateTime"></result>
+        <result column="status" property="status"></result>
+        <result column="is_insider" property="isInsider"></result>
+        <result column="true_name" property="trueName"></result>
+        <result column="phone_num" property="phoneNum"></result>
+        <result column="company_id" property="CompanyId"></result>
+    </resultMap>
+    <resultMap id="functionList" type="com.rysh.module.serverSystem.beans.Function">
+        <result property="id" column="id"></result>
+        <result property="functionName" column="function_name"></result>
+        <result property="functionUrl" column="function_url"></result>
+        <result property="status" column="status"></result>
+        <result property="createdTime" column="created_time"></result>
+        <result property="lastedUpdateTime" column="lasted_update_time"></result>
+    </resultMap>
+
+    <resultMap id="roleList" type="com.rysh.module.serverSystem.beans.Role">
+        <result property="id" column="id"></result>
+        <result property="roleName" column="role_name"></result>
+        <result property="status" column="status"></result>
+        <result property="createdTime" column="created_time"></result>
+        <result property="lastedUpdateTime" column="lasted_update_time"></result>
+    </resultMap>
+
+    <select id="findUserByUsername" resultMap="AUser" parameterType="String">
+        select * from server_user where username=#{username} and status =1
+    </select>
+
+    <select id="findAllFunction" resultMap="functionList">
+        select * from server_function where status= 1 and parent_id is not null
+    </select>
+
+    <select id="findFunctionByUsername" resultMap="functionList" parameterType="String">
+               select DISTINCT f2.* from server_function f1 inner join server_function f2 on f1.id=f2.parent_id
+        where f2.id in (select function_id from server_user_function where user_id=(select id from server_user where username=#{username} and status=1))
+        and f2.status =1 and f1.status = 1 ORDER BY f1.order_num,f2.order_num asc
+    </select>
+
+    <select id="findFunctionByUserNameForPower" resultMap="functionList" parameterType="String">
+        select * from server_function
+        where id in (select function_id from server_user_function where user_id=(select id from server_user where username=#{username} and status=1)) and status!=-1
+    </select>
+
+    <insert id="addUser" parameterType="com.rysh.module.serverSystem.beans.User">
+        insert into server_user(id,username,password,created_time,is_insider,status,true_name,phone_num,company_id) values(#{id},#{username},#{password},#{createdTime},#{isInsider},#{status},#{trueName},#{phoneNum},#{CompanyId})
+    </insert>
+
+    <select id="findFidByFunctionName" parameterType="String" resultType="String">
+        select id from server_function where function_name=#{functionName}
+    </select>
+
+    <select id="findFidByFunctionUrl" parameterType="String" resultType="String">
+        select id from server_function where function_url=#{functionurl} and status = 1
+    </select>
+
+    <select id="findRidByroleName" parameterType="String" resultType="String">
+        select id from server_role where role_name=#{roleName} and status =1
+    </select>
+
+    <insert id="addFunctionByUid" parameterType="com.rysh.module.serverSystem.beans.UserAndFunction">
+        insert into server_user_function(user_id,function_id) values (#{uid},#{fid})
+    </insert>
+
+    <select id="findUserByRole" resultMap="AUser" parameterType="String">
+        select * from server_user where id in (select user_id from server_user_role where role_id=(select id from server_role where role_name=#{roleName} and status=1)) and status=1
+   </select>
+
+    <insert id="addRoleByUid" parameterType="com.rysh.module.serverSystem.beans.UserAndRole">
+        insert into server_user_role(user_id,role_id) values(#{uid},#{rid})
+    </insert>
+
+    <select id="findRoleById" parameterType="String" resultMap="roleList">
+        select * from role where id in(select role_id from server_user_role where user_id=#{id}) and status=1
+    </select>
+
+    <select id="findRoleByUid" parameterType="String" resultMap="roleList">
+        select * from server_role where id in (select role_id from server_user_role where user_id=#{userId}) and status = 1
+    </select>
+
+    <select id="findFunctionByRole" parameterType="String" resultMap="functionList">
+    SELECT sf1.* FROM
+            (select * from server_function where id in (select function_id from server_role_function where role_id=(select id from server_role where role_name=#{roleName} and status =1))) AS sf1
+          INNER JOIN server_function AS sf2 ON sf1.parent_id = sf2.id ORDER BY sf2.order_num, sf1.order_num ASC
+    </select>
+
+    <delete id="deleteUserFunction" parameterType="com.rysh.module.serverSystem.beans.UserAndFunction">
+        delete from server_user_function where function_id=#{Fid} and user_id=#{Uid}
+    </delete>
+
+    <insert id="addFunctionToUser" parameterType="com.rysh.module.serverSystem.beans.UserAndFunction">
+        insert into server_user_function (user_id,function_id) values(#{Uid},#{Fid})
+    </insert>
+
+    <select id="findUserById" parameterType="String" resultMap="AUser">
+        select * from server_user where id=#{userid} and status = 1
+    </select>
+
+    <select id="findAllUser" resultMap="AUser" >
+        select * from  server_user where status =1
+    </select>
+    <select id="findFunctionByUid" parameterType="String" resultMap="functionList">
+       select s.* from server_function s,(select * from server_function where parent_id is null) b where s.id in (select function_id from server_user_function where user_id=#{userId}) and s.parent_id=b.id
+        ORDER BY b.order_num,s.order_num asc
+    </select>
+    <select id="findAllRole" resultMap="roleList">
+        select * from server_role where status =1;
+    </select>
+    <delete id="deleteFunctionFromUser" parameterType="com.rysh.module.serverSystem.beans.UserAndFunction">
+        delete from server_user_function where user_id=#{Uid} and function_id=#{Fid}
+    </delete>
+    <update id="deleteUser" parameterType="String">
+        update server_user set status=-1 where id=#{userid}
+    </update>
+    <update id="updatePasswordByUserId" parameterType="com.rysh.module.serverSystem.beans.User">
+        update server_user set password=#{password} where id=#{id}
+    </update>
+    <update id="updateStatusByUserId" parameterType="com.rysh.module.serverSystem.beans.User">
+        update server_user set status=#{status} where id=#{id}
+    </update>
+
+
+    <select id="findParentFunctionNameByFunctionId" parameterType="String" resultType="String">
+        select function_name from server_function where id=(select parent_id from server_function where id=#{id})
+    </select>
+
+
+    <update id="updateUserBasicData" parameterType="com.rysh.module.serverSystem.beans.User">
+        update server_user set true_name=#{trueName},phone_num=#{phoneNum},company_id=#{CompanyId} where id=#{id}
+    </update>
+
+    <update id="updateOperator" parameterType="com.rysh.module.serverSystem.beans.OperatorAndStore">
+        update store set operator=#{operator} where id=#{storeId}
+    </update>
+
+
+
+    <select id="findAllParentFunc" resultMap="functionList">
+        select * from server_function where status =1 and parent_id is null order by order_num asc
+    </select>
+
+    <select id="findSonFuncByParentId" parameterType="String" resultMap="functionList">
+        select * from server_function where status =1 and parent_id is not null and parent_id =#{parentId} order by order_num asc
+    </select>
+
+    <select id="searchAllUser" parameterType="String" resultMap="AUser">
+            select DISTINCT u.*
+            from server_user u
+            LEFT JOIN server_user_role ur on u.id=ur.user_id
+            LEFT JOIN server_role r on ur.role_id=r.id
+            LEFT JOIN server_user_function uf on u.id=uf.user_id
+            LEFT JOIN server_function f on uf.function_id=f.id
+            where u.`status`=1 and r.`status`=1 and f.`status`=1
+            and (u.username like "%"#{searchCondition}"%" or u.true_name like "%"#{searchCondition}"%" or u.phone_num like "%"#{searchCondition}"%" or r.role_name like "%"#{searchCondition}"%" or f.function_name like "%"#{searchCondition}"%")
+    </select>
+
+    <update id="updateUserCompanyId" parameterType="String">
+        update server_user set company_id = null where id =#{userId}
+    </update>
+
+    <select id="findParentFunctionByRoleName" parameterType="String" resultMap="functionList">
+        select * from server_function
+        where id in (select parent_id from server_function where id in (select function_id from server_role_function where role_id=(select id from server_role where role_name=#{roleName} and status=1))) ORDER BY order_num asc
+    </select>
+
+    <select id="findUserByStoreId" parameterType="String" resultMap="AUser">
+        select * from server_user where company_id=#{companyId}
+    </select>
+
+    <delete id="deleteRoleFromUser" parameterType="com.rysh.module.serverSystem.beans.UserAndRole">
+        delete from server_user_role where user_id=#{Uid} and role_id=#{Rid}
+    </delete>
+
+
+    <select id="findParentFunctionByUserId" parameterType="String" resultMap="functionList">
+        select * from server_function where id in (select parent_id from server_function
+        where id in (select function_id from server_user_function where user_id=#{userId}) and  status =1) ORDER BY order_num asc
+    </select>
+
+
+</mapper>

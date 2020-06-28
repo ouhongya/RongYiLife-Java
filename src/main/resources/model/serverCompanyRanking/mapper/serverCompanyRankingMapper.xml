@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.serverCompanyRanking.mapper.CompanyRankingMapper">
+
+    <select id="findAllCompanyRanking" resultType="com.rysh.module.serverCompanyRanking.beans.CompanyRankF">
+        select * from ranking_company where status !=-1 order by created_time desc
+    </select>
+    <update id="updateCompanyRankingStatus">
+        update ranking_company set status=#{status}
+    </update>
+    <update id="updateCompanyRankingItemStatus">
+        update ranking_company_item set status =#{status}
+    </update>
+    <insert id="addCompanyRanking">
+        insert into ranking_company(id, url, intro, created_time, operator) VALUES (#{id},#{companyRankF.url},#{companyRankF.intro},#{date},#{name})
+    </insert>
+    <insert id="addCompanyRankingItem">
+        insert into ranking_company_item (id, sequence, name, url, ranking_company_id, created_time) VALUES (#{id},#{companyRankS.sequence},#{companyRankS.name},#{companyRankS.url},#{Fid},#{date})
+    </insert>
+    <select id="findCompanyRankingItemByrankingCompanyId"
+            resultType="com.rysh.module.serverCompanyRanking.beans.CompanyRankS">
+        select * from ranking_company_item where ranking_company_id=#{id} and status !=-1 order by sequence asc
+    </select>
+    <select id="findNewestRanking" resultType="com.rysh.module.serverCompanyRanking.beans.CompanyRankF">
+        select * from ranking_company where status = 1
+    </select>
+    <select id="findCompanyFById" resultType="com.rysh.module.serverCompanyRanking.beans.CompanyRankF">
+        select * from ranking_company where id=#{id} and status !=-1
+    </select>
+</mapper>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.grange.mapper.GrangeCategoryMapper">
+    <resultMap id="BaseResultMap" type="com.rysh.module.grange.beans.GrangeCategory">
+      <id column="id" jdbcType="VARCHAR" property="id" />
+      <result column="name" jdbcType="VARCHAR" property="name" />
+      <result column="grange_id" jdbcType="VARCHAR" property="grangeId" />
+      <result column="status" jdbcType="TINYINT" property="status" />
+      <result column="oprerator" jdbcType="VARCHAR" property="oprerator" />
+      <result column="created_time" jdbcType="TIMESTAMP" property="createdTime" />
+      <result column="lasted_update_time" jdbcType="TIMESTAMP" property="lastedUpdateTime" />
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="com.rysh.module.grange.beans.GrangeCategory">
+      <selectKey keyProperty="id" keyColumn="id" resultType="String" order="BEFORE">
+          select upper(replace(uuid(), '-', ''))
+      </selectKey>
+      insert into grange_category (id, name, grange_id, status, created_time)
+      value (#{id},#{name},#{grangeId},#{status},#{createdTime})
+    </insert>
+    <select id="findBySatus" resultMap="BaseResultMap">
+      select * from grange_category where status = 0 and oprerator = 'system'
+    </select>
+    <select id="findAllAvailableCategory" resultMap="BaseResultMap">
+      select * from grange_category where grange_id = #{grangeId} and status = 1
+    </select>
+
+    <update id="deleteById">
+      update grange_category set status = 0 where id = #{id}
+    </update>
+
+    <update id="updateNameById">
+      update grange_category set name = #{name} where id =#{id}
+    </update>
+
+    <update id="checkPassMany" >
+        update grange_category set oprerator = #{oprator},status = 1 where id in
+        <foreach collection="ids" item="id" open="(" close=")" separator="," >
+          #{id}
+        </foreach>
+    </update>
+    <select id="findNameById" resultType="java.lang.String">
+        select name from grange_category where id = #{id}
+    </select>
+
+    <select id="findCategoryById" resultMap="BaseResultMap">
+        select * from grange_category where id = #{id}
+    </select>
+
+    <select id="findCategoryByLogin" resultType="com.rysh.module.farm.beans.CategoryInfo">
+       <if test="mayNull == null">
+           select t1.created_time createdTime,t1.name categoryName,t1.id id,count(t4.id) itemNum
+           from grange_category t1 left join grange t2 on t1.grange_id = t2.id and t1.status = 1 left join server_user t3 on t3.company_id = t2.id left join grange_item t4 on t4.category_id = t1.id and t4.status = 1
+           where t3.username = #{login} group by t1.name
+       </if>
+        <if test="mayNull != null" >
+            select t1.created_time createdTime,t1.name categoryName,t1.id id,count(t4.id) itemNum
+            from grange_category t1 left join grange t2 on t1.grange_id = t2.id and t2.id = #{mayNull}
+            left join grange_item t4 on t4.category_id = t1.id and t4.status = 1
+            where t1.status = 1 and t2.status != -1
+            group by t1.name
+        </if>
+    </select>
+    <select id="findGrangeCategory" resultMap="BaseResultMap">
+        select DISTINCT sc.* from grange_item s,grange_category sc where s.category_id = sc.id and sc.grange_id=#{marketId} and sc.status = 1 and s.state=1 and s.status=1
+    </select>
+    <select id="findCategoryByIdToOrders" resultMap="BaseResultMap">
+        select * from grange_category where id = #{id}
+    </select>
+
+
+</mapper>

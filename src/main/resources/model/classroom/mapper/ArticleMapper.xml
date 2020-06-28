@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.classroom.mapper.ArticleMapper">
+
+    <resultMap id="indexMap" type="com.rysh.module.classroom.beans.ArticleParam">
+        <result property="id" column="id" />
+        <result property="title" column="title" />
+        <result property="author" column="author" />
+        <result property="cover" column="cover" />
+        <result property="status" column="status" />
+        <result property="createdTime" column="created_time" />
+        <collection property="contents" ofType="com.rysh.module.classroom.beans.ArticleTxt">
+            <result property="content" column="content" />
+            <result property="queue" column="queue" />
+            <result property="type" column="type" />
+        </collection>
+    </resultMap>
+
+    <resultMap id="ClientArticleDetailMap" type="com.rysh.module.classroom.beans.ClientArticleDetail">
+        <result property="title" column="title" />
+        <result property="cover" column="cover" />
+        <result property="createdTime" column="created_time" />
+        <collection property="contents" ofType="com.rysh.module.classroom.beans.ArticleTxt">
+            <result property="type" column="type" />
+            <result property="queue" column="queue" />
+            <result property="content" column="content" />
+        </collection>
+    </resultMap>
+
+    <insert id="addArticleBody">
+        insert into article (id, title, operator, created_time,cover) values (#{id},#{title},#{operator},#{createdTime},#{cover})
+    </insert>
+    <insert id="addArticleContent">
+        insert into article_content (id, content, type, queue, article_id) values (#{id},#{content},#{type},#{queue},#{articleId})
+    </insert>
+    <update id="updateStatusById">
+        <if test="operation == 'up' ">
+            update article set status = 1 where id = #{id}
+        </if>
+        <if test="operation == 'down' ">
+            update article set status = 0 where id = #{id}
+        </if>
+    </update>
+
+    <select id="findClientArticle" resultType="com.rysh.module.classroom.beans.ClientArticle">
+        select distinct a.id,a.title,a.cover,a.created_time,ac.content intro
+        from article a left join article_content ac on a.id = ac.article_id
+        where a.status = 1 and ac.queue = 0 order by a.default_sort desc
+    </select>
+    <select id="findServerArticle" resultType="com.rysh.module.classroom.beans.Article">
+        <if test="search == 'default'">
+            SELECT a.id, a.title, a.author, a.cover, a.status, a.created_time,a.default_sort
+            FROM article a
+            WHERE a.status != -1
+        </if>
+        <if test="search == 'up'">
+            SELECT a.id, a.title, a.author, a.cover, a.status, a.created_time,a.default_sort
+            FROM article a
+            WHERE a.status = 1
+        </if>
+        <if test="search == 'down'">
+            SELECT a.id, a.title, a.author, a.cover, a.status, a.created_time,a.default_sort
+            FROM article a
+            WHERE a.status = 0
+        </if>
+    </select>
+    <update id="deleteArticle">
+        update article set status = -1,operator = #{operator} where id = #{id}
+    </update>
+    <update id="updateArticle">
+        update article set operator = #{operator},title=#{title},status = 0,cover=#{cover} where id = #{id}
+    </update>
+    <delete id="deleteArticleContentById">
+        delete from article_content where article_id = #{articleId}
+    </delete>
+    <select id="findArticleDetail" resultMap="indexMap">
+        select a.id,a.title,a.author,a.cover,a.status,a.created_time,ac.content,ac.queue,ac.type
+        from article a inner join article_content ac on a.id = ac.article_id
+        where ac.article_id = #{id} and a.status != -1
+    </select>
+    <select id="findClientArticleDetail" resultMap="ClientArticleDetailMap">
+        select a.title,a.cover,a.created_time,ac.queue,ac.content,ac.type
+        from article a left join article_content ac on a.id = ac.article_id
+        where a.id = #{id} and a.status = 1 order by ac.queue asc
+    </select>
+    <select id="findLikeByArticleId" resultType="java.lang.Integer">
+        select count(id) from article_user_likes where article_id = #{articleId} and user_id = #{uid}
+    </select>
+    <insert id="likeArticle">
+        insert into article_user_likes (id, user_id, article_id) values (#{id},#{userId},#{articleId})
+    </insert>
+    <select id="findLikeNumByArticleId" resultType="int">
+        select count(id) from article_user_likes where article_id = #{articleId}
+    </select>
+    <select id="findIsLiked" resultType="com.rysh.module.classroom.beans.ArticleUserLike">
+        select * from article_user_likes where user_id = #{userId}
+    </select>
+    <update id="updateArticleSort">
+        update article set default_sort = #{sort} where id = #{id}
+    </update>
+
+
+</mapper>

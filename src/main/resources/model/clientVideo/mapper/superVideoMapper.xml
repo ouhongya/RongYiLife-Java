@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.clientVideo.mapper.SuperVideoMapper">
+
+    <select id="findAllVideo" resultType="com.rysh.module.classroom.beans.Video">
+        select * from video where status = 1 order by created_time desc
+    </select>
+    <select id="findCountVideoUp" resultType="java.lang.Integer">
+        select count(*) from video_user_likes where video_id=#{id}
+    </select>
+    <select id="findUpByUser" resultType="java.lang.String">
+        select id from video_user_likes where video_id=#{videoId} and user_id=#{userId}
+    </select>
+    <insert id="setUp">
+        insert into video_user_likes (id, user_id, video_id)  values (#{id},#{uid},#{videoId})
+    </insert>
+
+
+</mapper>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.shop.mapper.ShopCategoryMapper">
+    <resultMap id="BaseResultMap" type="com.rysh.module.shop.beans.ShopCategory">
+      <id column="id" jdbcType="VARCHAR" property="id" />
+      <result column="name" jdbcType="VARCHAR" property="name" />
+      <result column="shop_id" jdbcType="VARCHAR" property="shopId" />
+      <result column="status" jdbcType="TINYINT" property="status" />
+      <result column="created_time" jdbcType="TIMESTAMP" property="createdTime" />
+      <result column="lasted_update_time" jdbcType="TIMESTAMP" property="lastedUpdateTime" />
+    </resultMap>
+
+    <insert id="insertCategory">
+      <selectKey keyProperty="id" keyColumn="id" resultType="String" order="BEFORE">
+        select upper(replace(uuid(), '-', ''))
+      </selectKey>
+      insert into shop_category (id, name, shop_id,created_time,status)
+      VALUE (#{id},#{name},#{shopId},#{createdTime},#{status})
+    </insert>
+
+  <select id="findAllAvailableCategory" resultMap="BaseResultMap">
+    select * from shop_category where shop_id = #{id} and status = 1
+  </select>
+
+  <update id="deleteCategoryById">
+    update shop_category set status = -1 where id = #{id} and shop_id = #{shopId}
+  </update>
+
+  <select id="findCategoryById" resultMap="BaseResultMap">
+    select * from shop_category where id = #{id}
+  </select>
+  <update id="updateNameById">
+    update shop_category set name = #{name} where  id  = #{id}
+  </update>
+
+  <select id="findCategoryByLogin" resultType="com.rysh.module.farm.beans.CategoryInfo">
+    select t1.created_time createdTime,t1.name categoryName,t1.id id,count(t4.id) itemNum
+    from shop_category t1 left join shop t2 on t1.shop_id = t2.id and t1.status = 1 left join server_user t3 on t3.company_id = t2.id left join shop_item t4 on t4.category_id = t1.id and t4.status = 1
+    where t3.username = #{login} group by t1.name
+  </select>
+    <select id="findShopCategory" resultMap="BaseResultMap">
+      select DISTINCT sc.* from shop_item s,shop_category sc where s.category_id = sc.id and sc.shop_id=#{marketId} and sc.status = 1 and s.state=1 and s.status=1
+    </select>
+    <select id="findCategoryByIdToOrders" resultMap="BaseResultMap">
+      select * from shop_category where id = #{id}
+    </select>
+  <select id="findAllCategory" resultMap="BaseResultMap">
+    select * from shop_category where status = 1
+    <if test="search != null and search != ''">
+      and (name like "%"#{search}"%")
+    </if>
+  </select>
+
+</mapper>

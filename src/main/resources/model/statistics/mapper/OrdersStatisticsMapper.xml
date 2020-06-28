@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.statistics.mapper.OrdersStatisticsMapper">
+
+    <select id="findMarketByTime" resultType="com.rysh.module.clientOrders.beans.OrdersSplit">
+        select DISTINCT  os.* from orders o,orders_split os  where os.belong_type=#{belongType} and o.pay_time &gt; #{startTime} and o.pay_time &lt; #{endTime}
+    </select>
+    <select id="findOrdersByMarketId" resultType="com.rysh.module.clientOrders.beans.OrdersSplit">
+        select DISTINCT  os.* from orders o,orders_split os
+        where o.id=os.orders_id and o.state = 2 and os.state=3 and os.status = 1 and os.shop_id=#{marketId}
+         <if test="startTime != null and startTime != '' and endTime != null and endTime != ''">
+             and o.pay_time &gt; #{startTime} and o.pay_time &lt; #{endTime}
+         </if>
+         order by o.pay_time desc
+    </select>
+    <select id="findOrdersItemCountBySplitId" resultType="java.lang.Integer">
+        select count(*) from orders_item where orders_split_id=#{id}
+    </select>
+    <select id="findOrdersCount" resultType="java.lang.Integer">
+        select count(os.id) from orders_split os,orders o where os.orders_id=o.id and os.shop_id=#{marketId} and o.pay_time &gt;= #{sTime} and o.pay_time &lt; #{eTime} and os.state = 3
+    </select>
+    <select id="findOrdersCountByMarketId" resultType="java.lang.Integer">
+        select count(*) from orders_split where shop_id=#{id} and state = 3 and status = 1
+    </select>
+    <select id="findSumOrdersPriceByTime" resultType="java.math.BigDecimal">
+        select sum(os.real_play) from orders_split os,orders o where os.orders_id=o.id and shop_id=#{marketId}
+        <if test="startTime != null and startTime != '' and endTime != null and endTime != ''">
+            and o.pay_time &gt;= #{startTime} and pay_time &lt; #{endTime}
+        </if>
+    </select>
+    <select id="findSumPrice" resultType="com.rysh.module.statistics.beans.RYSHPrice">
+        select SUM(real_play) as price,belong_type as belongType
+        from orders_split os,orders o where o.state = 2 and o.id=os.orders_id and os.status = 1 and os.state = 3
+        <if test="startTime != null and startTime != '' and endTime != null and endTime != ''">
+            and  o.pay_time &gt;= #{startTime} and o.pay_time &lt; #{endTime}
+        </if>
+        GROUP BY os.belong_type
+    </select>
+    <select id="findShopOrdersCount" resultType="java.lang.Integer">
+        select COUNT(*) from  (select os.* from orders_split os,orders_item oi,shop_category sc,shop_item si
+        where os.id=oi.orders_split_id and os.state = 3 and sc.id = si.category_id and si.category_id=#{id} and oi.product_item_id = si.id
+        GROUP BY oi.orders_split_id) s
+    </select>
+    <select id="findSumShopPriceByTime" resultType="java.math.BigDecimal">
+        select SUM(oi.price * oi.quantity)
+        from orders o,orders_split os,orders_item oi,shop_category s,shop_item si
+        where si.category_id = s.id and si.id = oi.product_item_id and os.id = oi.orders_split_id and os.state = 3 and os.status = 1
+        and o.id=os.orders_id  and s.id=#{shopCategoryId}
+        <if test="endTime != null and endTime != '' and startTime != null and startTime != ''">
+            and o.pay_time &gt;= #{startTime} and o.pay_time &lt; #{endTime}
+        </if>
+    </select>
+    <select id="findMoneyCount" resultType="java.math.BigDecimal">
+        select SUM(os.real_play) from orders o,orders_split os where os.shop_id=#{marketId} and os.status = 1 and os.state=3 and o.id=os.orders_id
+        <if test="startTime != null and startTime != '' and endTime != null and endTime != ''">
+            and o.pay_time &gt;= #{startTime} and o.pay_time &lt; #{endTime}
+        </if>
+    </select>
+</mapper>

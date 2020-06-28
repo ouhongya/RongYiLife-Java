@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.clientOrders.mapper.OrdersMapper">
+        <resultMap id="ordersList" type="com.rysh.module.clientOrders.beans.Orders">
+            <id property="id" column="id"/>
+            <result property="userId" column="user_id"/>
+            <result property="realPay" column="real_pay"/>
+            <result property="ordersNum" column="ordres_num"/>
+            <result property="tradeNum" column="trade_num"/>
+            <result property="payWay" column="pay_way"/>
+            <result property="payTime" column="pay_time"/>
+            <result property="createdTime" column="created_time"/>
+            <result property="name" column="shop_address_name"/>
+            <result property="address" column="shop_address"/>
+            <result property="phone" column="shop_address_phone"/>
+            <result property="zipCode" column="shop_address_zip_code"/>
+        </resultMap>
+        <resultMap id="ordersItemList" type="com.rysh.module.clientOrders.beans.OrdersItem">
+            <id property="id" column="id"/>
+            <result property="productItemId" column="product_item_id"/>
+            <result property="price" column="price"/>
+            <result property="quantity" column="quantity"/>
+            <result property="ordersSplitId" column="orders_split_id"/>
+            <result property="createdTime" column="created_time"/>
+        </resultMap>
+        <resultMap id="ordersSplitList" type="com.rysh.module.clientOrders.beans.OrdersSplit">
+            <id property="id" column="id"/>
+            <result property="ordersId" column="orders_id"/>
+            <result property="state" column="state"/>
+            <result property="freight" column="freight"/>
+            <result property="usedSorce" column="used_sorce"/>
+            <result property="marketId" column="shop_id"/>
+            <result property="discountRate" column="discount_rate"/>
+            <result property="realPlay" column="real_play"/>
+            <result property="belongType" column="belong_type"/>
+            <result property="createdTime" column="created_time"/>
+            <result property="courierNum" column="courier_num"/>
+            <result property="courier" column="courier"/>
+        </resultMap>
+
+    <insert id="addOrdersItem" parameterType="com.rysh.module.clientOrders.beans.OrdersItem">
+        insert into orders_item (id,product_item_id,price,quantity,orders_split_id,created_time,product_name,product_url,category_name,unit) values (#{id},#{productItemId},#{price},#{quantity},#{ordersSplitId},#{createdTime},#{productName},#{productUrl},#{categoryName},#{unit})
+    </insert>
+
+    <insert id="addOrders" parameterType="com.rysh.module.clientOrders.beans.Orders">
+        insert into orders (id,user_id,real_pay,ordres_num,created_time,shop_address_name,shop_address,shop_address_phone,shop_address_zip_code) values (#{id},#{userId},#{realPay},#{ordersNum},#{createdTime},#{name},#{address},#{phone},#{zipCode})
+    </insert>
+
+    <insert id="addOrdersSplit" parameterType="com.rysh.module.clientOrders.beans.OrdersSplit">
+        insert into orders_split(id,orders_id,freight,used_sorce,shop_id,discount_rate,real_play,belong_type,created_time,courier_num,courier) values (#{id},#{ordersId},#{freight},#{usedSorce},#{marketId},#{discountRate},#{realPlay},#{belongType},#{createdTime},#{courierNum},#{courier})
+    </insert>
+
+    <update id="updateOrdersState" parameterType="com.rysh.module.clientOrders.beans.StateAndOrdersId">
+        update orders set state = #{so.state},pay_time=#{payTime},pay_way=#{payWay} where id=#{so.ordersId}  and status = 1 and state !=2
+    </update>
+
+    <update id="updateOrdersSplitStatus" parameterType="com.rysh.module.clientOrders.beans.StateAndOrdersId">
+        update orders_split set status = #{state} where orders_id=#{ordersId}
+    </update>
+
+    <select id="findOrdersByUserIdAndState" parameterType="com.rysh.module.clientOrders.beans.UserIdAndState" resultMap="ordersList">
+        select DISTINCT o.* from orders o,orders_split op where op.orders_id=o.id and o.user_id=#{userId} and o.state = #{ordersState} and o.status = 1 and op.`status` =#{ordersSplitStatus} and op.state=#{ordersSplitState} order by created_time desc
+    </select>
+
+    <select id="findOrdersSplitByOrdersId" parameterType="com.rysh.module.clientOrders.beans.OrdersIdAndStateAndStatue" resultMap="ordersSplitList">
+        select * from orders_split where orders_id=#{ordersId}  and status = #{status} and state=#{state} order by created_time
+    </select>
+
+    <select id="findOrdersItemByOrdersSplitId" parameterType="String" resultMap="ordersItemList">
+        select * from orders_item where orders_split_id = #{ordersSplitId} and status = 1
+    </select>
+
+    <select id="findAllOrdersByUserId" parameterType="String" resultMap="ordersList">
+        select DISTINCT o.* from orders o,orders_split op where op.orders_id=o.id and o.user_id=#{userId} and o.status = 1 order by created_time
+    </select>
+
+  <select id="findAllSplitByOrdersId" parameterType="String" resultMap="ordersSplitList">
+      select * from orders_split where orders_id=#{ordersId} and status !=-1
+  </select>
+
+    <select id="findOrdersByOrderId" parameterType="String" resultMap="ordersList">
+        select * from orders where id =#{ordersId} and status = 1
+    </select>
+    <select id="findOrdersSplitById" resultMap="ordersSplitList" parameterType="String">
+        select * from orders_split where id = #{splitId} and status = 1
+    </select>
+    <update id="addOrdersSplitRealPay">
+        update orders_split set real_play=#{splitPrice} where id=#{splitId}
+    </update>
+    <update id="updateOrdersSplitState">
+        update orders_split set state=#{state} where id=#{splitId}
+    </update>
+    <update id="updatecourierDataBySplitId">
+        update orders_split set courier=#{shopAddressResult.courier},courier_num=#{shopAddressResult.courierNum} where id=#{splitId}
+    </update>
+    <select id="findItemCountByGoodsId" resultType="java.lang.Integer">
+       select count(*) from orders_split os,orders_item oi where os.id=oi.orders_split_id and oi.product_item_id=#{goodsId} and oi.status = 1 and os.status = 1
+    </select>
+    <select id="findSplitCountByMarketId" resultType="java.lang.Integer">
+        select count(*) from orders_split where shop_id=#{marketId} and status = 1
+    </select>
+
+    <insert id="addScoreUser">
+        insert into score_user (id, user_id, score,orders_split_id, created_time) VALUES (#{scoreUser.id},#{scoreUser.userId},#{scoreUser.score},#{scoreUser.ordersSplitId},#{scoreUser.createdTime})
+    </insert>
+    <select id="findSplitIdsByMarketId" resultType="java.lang.String">
+        select id from orders_split where shop_id=#{marketId} and status = 1 and state=3
+    </select>
+    <select id="findScoreBySplitId" resultType="java.lang.Integer">
+        select score from score_user where orders_split_id=#{splitId}
+    </select>
+    <select id="findAllOrdersIdByUserId" resultType="java.lang.String">
+        select id from orders where user_id=#{uid} and status = 1
+    </select>
+    <select id="findOrdersSplitByShopId" resultMap="ordersSplitList">
+        select * from orders_split where shop_id=#{marketId} and status = 1 order by created_time desc
+    </select>
+    <select id="findNotAutomaticCancelOrdersByUserId" resultMap="ordersList">
+        select * from orders where user_id=#{uid} and status = 1 and state !=4 order by lasted_update_time desc
+    </select>
+    <select id="findOrdersSplitByOrderId" resultMap="ordersSplitList">
+        select * from orders_split where orders_id=#{id} order by created_time desc
+    </select>
+    <select id="findOrdersByOrderIdToScore" resultMap="ordersList">
+        select * from orders where id=#{ordersId} and state = 2 and status = 1
+    </select>
+    <select id="findOrdersSplitByOrderIdAndShopId" resultMap="ordersSplitList">
+        select * from orders_split where orders_id=#{id} and shop_id=#{marketId} order by created_time desc
+    </select>
+    <select id="findScoreUser" resultType="com.rysh.module.clientOrders.beans.ScoreUser">
+        select * from score_user where orders_split_id=#{ordersSplitId} and user_id=#{uid}
+    </select>
+    <select id="findOrdersByOrderIdToStatistics" resultMap="ordersList">
+        select * from orders where id = #{ordersId} and state = 2
+    </select>
+</mapper>

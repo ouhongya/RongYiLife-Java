@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.rysh.module.productCustomize.mapper.ProductCustomizeMapper">
+
+    <resultMap id="ProductCustomizeRoMap" type="com.rysh.module.productCustomize.beans.ProductCustomizeRo">
+        <id property="id" column="id" />
+        <result property="status" column="status" />
+        <result property="pass" column="pass" />
+        <result property="createdTime" column="created_time" />
+        <result property="cover" column="cover" />
+        <result property="title" column="title" />
+        <result property="defaultSort" column="default_sort" />
+        <result property="passComment" column="pass_comment" />
+        <association property="count"
+                     javaType="java.lang.Integer"
+                     column="id"
+                     select="countContactNum" />
+        <association property="productCustomizedCategory"
+                     javaType="com.rysh.module.productCustomize.beans.ProductCustomizeCategory"
+                     column="id"
+                     select="selectCategoryNameByCustomId" />
+        <collection property="contents"
+                    ofType="com.rysh.module.productCustomize.beans.ProductCustomizeContent"
+                    column="id"
+                    javaType="ArrayList"
+                    select="selectContentByCustomId" />
+    </resultMap>
+
+    <insert id="addProductCustom">
+        insert into product_customized (id, title, cover, product_customized_category_id, operator, pass_operator, pass_time, pass_comment, created_time,status,default_sort)
+        values (#{id},#{title},#{cover},#{productCustomizedCategoryId},#{operator},#{passOperator},#{passTime},#{passComment},#{createdTime},#{status},#{defaultSort})
+    </insert>
+    <insert id="addProductCustomContent">
+        insert into product_customized_content (id, content, type, queue, product_customized_id)
+        values (#{id},#{content},#{type},#{queue},#{productCustomizedId})
+    </insert>
+    <select id="findAll" resultMap="ProductCustomizeRoMap">
+        <if test="search == 'default' ">
+            select * from product_customized where status != -1
+        </if>
+        <if test="search == 'up' ">
+            select * from product_customized where status = 1
+        </if>
+        <if test="search == 'down' ">
+            select * from product_customized where status = 0
+        </if>
+    </select>
+
+    <select id="selectContentByCustomId" resultType="com.rysh.module.productCustomize.beans.ProductCustomizeContent">
+        select content,queue,type from product_customized_content where product_customized_id = #{id}
+    </select>
+    <select id="selectCategoryNameByCustomId" resultType="com.rysh.module.productCustomize.beans.ProductCustomizeCategory">
+        select c.id,c.name from product_customized_category c ,product_customized p
+        where p.product_customized_category_id = c.id and c.status = 1 and p.id = #{id}
+    </select>
+    <select id="countContactNum" resultType="integer">
+        select count(id) from product_customized_contact where product_customized_id = #{id}
+    </select>
+    <update id="applyToClient">
+        <if test="operation =='up' " >
+            update product_customized set status = 1 where id = #{id}
+        </if>
+        <if test="operation =='down' " >
+            update product_customized set status = 0 where id = #{id}
+        </if>
+        <if test="operation =='delete' " >
+            update product_customized set status = -1 where id = #{id}
+        </if>
+    </update>
+    <select id="findOneById" resultMap="ProductCustomizeRoMap">
+        select * from product_customized where id = #{id}
+    </select>
+    <update id="update">
+        update product_customized set title = #{title},cover = #{cover},
+        product_customized_category_id = #{productCustomizedCategoryId},operator = #{operator},
+        pass = #{pass},status = #{status},default_sort = #{defaultSort} where id = #{id}
+    </update>
+    <delete id="deleteContentByCustomId">
+        delete from product_customized_content where product_customized_id = #{id}
+    </delete>
+    <update id="updateSort">
+        update product_customized set default_sort = #{sort} where id =#{id}
+    </update>
+    <select id="findContact" resultType="com.rysh.module.productCustomize.beans.ProductCustomizeContact">
+        select * from product_customized_contact where product_customized_id = #{id}
+    </select>
+    <update id="checkPass">
+        <if test=" checkPass.checkParam.operation == 'pass' ">
+            update product_customized set pass = 1,status = 1,pass_time = #{checkPass.passTime},pass_operator = #{checkPass.passOperator},pass_comment = #{checkPass.checkParam.passComment}
+            where id in
+            <foreach collection="checkPass.checkParam.ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        <if test=" checkPass.checkParam.operation == 'fail' ">
+            update product_customized set pass = -1,pass_time = #{checkPass.passTime},pass_operator = #{checkPass.passOperator},pass_comment = #{checkPass.checkParam.passComment}
+            where id in
+            <foreach collection="checkPass.checkParam.ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </update>
+
+    <resultMap id="checkMap" type="com.rysh.module.productCustomize.beans.ProductCustomizeVo">
+        <result property="id" column="id" />
+        <result property="cover" column="cover" />
+        <result property="defaultSort" column="default_sort" />
+        <result property="productCustomizedCategoryId" column="categoryName" />
+        <result property="title" column="title" />
+        <collection property="contents" ofType="com.rysh.module.productCustomize.beans.ProductCustomizeContent">
+            <result property="content" column="content" />
+            <result property="queue" column="queue" />
+            <result property="type" column="type" />
+        </collection>
+    </resultMap>
+
+    <select id="findAllUncheck" resultMap="checkMap">
+        select main.* ,content.content,content.queue,content.type,category.name categoryName
+        from product_customized main
+        left join product_customized_category category on category.id = main.product_customized_category_id and category.status = 1
+        left join product_customized_content content on content.product_customized_id = main.id
+        where main.pass = 0
+    </select>
+    <select id="checkHistory" resultType="com.rysh.module.productCustomize.beans.ProductCustomize">
+        <if test="search == 'default' ">
+            select * from product_customized where pass != 0
+        </if>
+        <if test="search == 'pass' ">
+            select * from product_customized where pass = 1
+        </if>
+        <if test="search == 'fail' ">
+            select * from product_customized where pass = -1
+        </if>
+    </select>
+
+
+</mapper>

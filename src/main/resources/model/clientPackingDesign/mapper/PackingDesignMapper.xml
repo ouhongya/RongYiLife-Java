@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.clientPackingDesign.mapper.PackingDesignMapper">
+
+    <select id="findPackingDesign" resultType="com.rysh.module.clientPackingDesign.beans.PackingDesign">
+        select * from product_customized pc,product_customized_category pcc
+        where pc.pass=1 and pc.status = 1 and pcc.status = 1 and pc.product_customized_category_id = pcc.id
+        <if test="categoryId != null and categoryId != ''">
+            and pcc.id=#{categoryId}
+        </if>
+        order by default_sort desc
+    </select>
+    <select id="findPackingDesignDetailById"
+            resultType="com.rysh.module.clientPackingDesign.beans.PackingDesignDetail">
+        select * from product_customized_content where product_customized_id=#{id} order by queue asc
+    </select>
+    <select id="findPackingDesignCategory"
+            resultType="com.rysh.module.clientPackingDesign.beans.PackingDesignCategory">
+            select DISTINCT  pcc.* from product_customized_category pcc,product_customized pc
+            where pcc.status= 1 and pcc.id=pc.product_customized_category_id and pc.status = 1
+            and pc.pass=1
+    </select>
+    <insert id="addMessageToP">
+        insert into product_customized_contact (id, name, tel, product_customized_id, created_time) values (#{id},#{name},#{tel},#{customizedId},#{date})
+    </insert>
+
+</mapper>

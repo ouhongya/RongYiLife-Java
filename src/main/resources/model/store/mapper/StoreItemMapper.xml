@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.store.mapper.StoreItemMapper">
+  <resultMap id="BaseResultMap" type="com.rysh.module.store.beans.StoreItem">
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="category_id" jdbcType="VARCHAR" property="categoryId" />
+    <result column="state" jdbcType="TINYINT" property="state" />
+    <result column="status" jdbcType="TINYINT" property="status" />
+    <result column="oprerator" jdbcType="VARCHAR" property="oprerator" />
+    <result column="created_time" jdbcType="TIMESTAMP" property="createdTime" />
+    <result column="lasted_update_time" jdbcType="TIMESTAMP" property="lastedUpdateTime" />
+    <result column="pass" jdbcType="TINYINT" property="pass" />
+    <result column="pass_operator" jdbcType="VARCHAR" property="passOperator" />
+    <result column="pass_time" jdbcType="TIMESTAMP" property="passTime" />
+    <result column="pass_comment" jdbcType="VARCHAR" property="passComment" />
+  </resultMap>
+    <select id="findStoreItemById" parameterType="String" resultMap="BaseResultMap">
+        select * from store_item where id=#{itemId} and status =  1
+    </select>
+  <select id="findStoreItemByIdPlus" parameterType="String" resultMap="BaseResultMap">
+    select * from store_item where id=#{itemId} and status =  1 and pass = 1 and state = 1
+  </select>
+  <select id="findStoreItemByIdToOrders" resultMap="BaseResultMap">
+    select * from store_item where id=#{itemId}
+  </select>
+
+</mapper>

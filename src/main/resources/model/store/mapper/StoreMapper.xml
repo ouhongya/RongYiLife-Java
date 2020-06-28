@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.store.mapper.StoreMapper2">
+    <resultMap id="BaseResultMap" type="com.rysh.module.store.beans.Store">
+      <id column="id" jdbcType="VARCHAR" property="id" />
+      <result column="name" jdbcType="VARCHAR" property="name" />
+      <result column="address" jdbcType="VARCHAR" property="address" />
+      <result column="contact_num" jdbcType="VARCHAR" property="contactNum" />
+      <result column="created_time" jdbcType="TIMESTAMP" property="createdTime" />
+      <result column="lasted_update_time" jdbcType="TIMESTAMP" property="lastedUpdateTime" />
+      <result column="status" jdbcType="TINYINT" property="status" />
+    </resultMap>
+
+    <resultMap id="responseMap" type="com.rysh.module.store.beans.StoreParam" >
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="description" property="description" />
+        <result column="category_id" property="categoryId" />
+        <result column="categotyName" property="categoryId" />
+        <association property="spec" javaType="com.rysh.module.store.beans.StoreSpec">
+            <result column="price" property="price" />
+            <result column="unit" property="unit" />
+        </association>
+        <collection property="imgUrls" ofType="com.rysh.module.store.beans.StoreImg">
+            <result column="url" property="url" />
+            <result column="location" property="location" />
+        </collection>
+    </resultMap>
+
+    <resultMap id="storeInfoMap" type="com.rysh.module.store.beans.StoreInfo">
+        <result property="id" column="id" />
+        <result property="address" column="address" />
+        <result property="name" column="name" />
+        <result property="contactNum" column="contactNum" />
+        <result property="intro" column="intro" />
+        <result property="status" column="status" />
+        <result property="freight" javaType="java.math.BigDecimal" column="freight" />
+        <collection property="tags" ofType="com.rysh.module.store.beans.StoreTag">
+            <result property="name" column="tagName" />
+            <result property="id" column="stid" />
+        </collection>
+        <collection property="communities" ofType="com.rysh.module.community.beans.Community">
+            <result property="name" column="communityName" />
+        </collection>
+        <collection property="account" ofType="com.rysh.module.serverSystem.beans.Owner">
+            <result property="ownerName" column="ownerName" />
+            <result property="ownerUsername" column="ownerUsername" />
+        </collection>
+    </resultMap>
+
+    <select id="findStoreByLogin" resultMap="BaseResultMap">
+      select distinct t1.*
+      from store t1,server_user t2
+      where t2.company_id = t1.id and t2.username = #{login}
+    </select>
+    <select id="findBySearch" resultMap="BaseResultMap">
+        select
+        distinct f.*
+        from
+        server_user u
+        right join store f on
+        u.company_id = f.id
+        where
+        f.status != -1
+        <if test="search != null and search != ''">
+            and (f.name like "%"#{search}"%" or f.address like "%"#{search}"%" or u.true_name like "%"#{search}"%" or u.username like "%"#{search}"%")
+        </if>
+    </select>
+
+    <insert id="insertNew">
+        insert into store_item
+        (id, name, description,category_id, status,state, oprerator, created_time,pass)
+        value (#{id},#{name},#{description},#{categoryId},#{status},#{state},#{oprerator},#{createdTime},#{pass})
+    </insert>
+
+    <select id="findUncheck" resultMap="responseMap">
+        select t1.id,t1.name,t1.description,t2.url,t2.location,t3.name categotyName,t4.price,t4.unit
+        from store_item t1 left join store_img t2 on t2.item_id = t1.id left join store_category t3 on t3.id = t1.category_id left join store_spec t4 on t4.item_id = t1.id
+        where t1.pass = 0 and t1.status = 1
+    </select>
+
+    <update id="updateStatus">
+        update store_item set status = -1 ,oprerator = #{operator} where id = #{id}
+    </update>
+    
+    <update id="updateManyById">
+        <if test="operation != null and operation != '' and operation == 'pass'">
+            update store_item set pass_operator=#{operator}, pass = 1,state = 1,pass_time=#{passTime},pass_comment=#{passComment},oprerator = #{operator} where status = 1 and id in
+            <foreach collection="ids" item="id" open="(" separator="," close=")" >
+                #{id}
+            </foreach>
+        </if>
+        <if test="operation != null and operation != '' and operation == 'fail'">
+            update store_item set pass_operator=#{operator}, pass = -1,state = 0,pass_time=#{passTime},pass_comment=#{passComment},oprerator = #{operator} where status = 1 and id in
+            <foreach collection="ids" item="id" open="(" separator="," close=")" >
+                #{id}
+            </foreach>
+        </if>
+    </update>
+    
+    <select id="findByCondition" resultType="com.rysh.module.store.beans.StoreItemView">
+        <if test="search != null and search != '' and search == 'default'">
+            select distinct t1.id id,t2.url img,t1.name name,t4.price price,t4.unit unit,t3.name category,t1.state state,t1.description,t1.created_time createdTime,t1.pass pass,t1.pass_comment passComment,t6.id farmId
+            from
+            store_item t1,store_img t2,store_category t3,store_spec t4,server_user t5,store t6,server_user t7
+            where
+            t1.category_id = t3.id and t3.store_id = t6.id and t2.item_id = t1.id and t7.company_id = t6.id and t2.location = 0 and t4.item_id = t1.id and t1.status = 1 and t7.username = #{login}
+        </if>
+
+        <if test="search != null and search != '' and search == 'up'">
+            select distinct t1.id id,t2.url img,t1.name name,t4.price price,t4.unit unit,t3.name category,t1.state state,t1.description,t1.created_time createdTime,t1.pass pass,t1.pass_comment passComment,t6.id farmId
+            from
+            store_item t1,store_img t2,store_category t3,store_spec t4,server_user t5,store t6,server_user t7
+            where
+            t1.category_id = t3.id and t3.store_id = t6.id and t2.item_id = t1.id and t7.company_id = t6.id and t2.location = 0 and t4.item_id = t1.id and t1.status = 1 and t1.state = 1 and t1.pass = 1 and t7.username = #{login}
+        </if>
+
+        <if test="search != null and search != '' and search == 'down'">
+            select distinct t1.id id,t2.url img,t1.name name,t4.price price,t4.unit unit,t3.name category,t1.state state,t1.description,t1.created_time createdTime,t1.pass pass,t1.pass_comment passComment,t6.id farmId
+            from
+            store_item t1,store_img t2,store_category t3,store_spec t4,server_user t5,store t6,server_user t7
+            where
+            t1.category_id = t3.id and t3.store_id = t6.id and t2.item_id = t1.id and t7.company_id = t6.id and t2.location = 0 and t4.item_id = t1.id and t1.status = 1 and t1.state = -1 and t1.pass = 1 and t7.username = #{login}
+        </if>
+
+        <if test="search != null and search != '' and search == 'init'">
+            select distinct t1.id id,t2.url img,t1.name name,t4.price price,t4.unit unit,t3.name category,t1.state state,t1.description,t1.created_time createdTime,t1.pass pass,t1.pass_comment passComment,t6.id farmId
+            from
+            store_item t1,store_img t2,store_category t3,store_spec t4,server_user t5,store t6,server_user t7
+            where
+            t1.category_id = t3.id and t3.store_id = t6.id and t2.item_id = t1.id and t7.company_id = t6.id and t2.location = 0 and t4.item_id = t1.id and t1.status = 1 and t1.pass = 0 and t7.username = #{login}
+        </if>
+
+        <if test="search != null and search != '' and search == 'fail'">
+            select distinct t1.id id,t2.url img,t1.name name,t4.price price,t4.unit unit,t3.name category,t1.state state,t1.description,t1.created_time createdTime,t1.pass pass,t1.pass_comment passComment,t6.id farmId
+            from
+            store_item t1,store_img t2,store_category t3,store_spec t4,server_user t5,store t6,server_user t7
+            where
+            t1.category_id = t3.id and t3.store_id = t6.id and t2.item_id = t1.id and t7.company_id = t6.id and t2.location = 0 and t4.item_id = t1.id and t1.status = 1 and t1.pass = -1 and t7.username = #{login}
+        </if>
+    </select>
+    
+    <select id="findById" resultMap="responseMap">
+        select t1.id, t1.name,t1.description,t1.category_id,t2.url,t2.location,t3.price,t3.unit
+        from store_item t1,store_img t2,store_spec t3
+        where t1.id = t2.item_id and t1.id = t3.item_id and t1.id = #{id}
+    </select>
+
+    <update id="updateItem">
+        update store_item set name = #{name},category_id = #{categoryId}, pass = #{pass},
+        oprerator = #{oprerator},description = #{description} where id = #{id}
+    </update>
+
+    <update id="itemUpOrDownShelf">
+        update store_item set oprerator=#{operator},
+        <if test="operation != null and operation == 'up'">
+            state = 1
+        </if>
+        <if test="operation != null and operation == 'down'">
+            state = -1
+        </if>
+        where status = 1 and pass = 1 and id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")" >
+            #{id}
+        </foreach>
+    </update>
+
+    <select id="findCountByFarmId" resultType="int">
+        select count(id)
+        from store_item where category_id = #{categoryId}
+    </select>
+    
+    <select id="findUncheckById" resultMap="responseMap">
+        select t1.id,t1.name,t1.description,t2.url,t2.location,t3.name categotyName,t4.price,t4.unit
+        from store_item t1 left join store_img t2 on t2.item_id = t1.id left join store_category t3 on t3.id = t1.category_id left join store_spec t4 on t4.item_id = t1.id
+        where t1.pass = 0 and t1.id = #{id}
+    </select>
+
+    <update id="deleteById">
+        update store_item set status = -1 where id = #{id}
+    </update>
+
+    <select id="findCheckHistory" resultType="com.rysh.module.store.beans.StoreItemView">
+        <if test="search != null and search != '' and search == 'default'">
+            select name,description,pass_operator passOperator,pass_time passTime,pass_comment passComment,pass pass from store_item where  pass_operator is not null and status = 1
+        </if>
+        <if test="search != null and search != '' and search == 'pass'">
+            select name,description,pass_operator passOperator,pass_time passTime,pass_comment passComment,pass pass from store_item where  pass_operator is not null and status = 1 and pass = 1
+        </if>
+        <if test="search != null and search != '' and search == 'fail'">
+            select name,description,pass_operator passOperator,pass_time passTime,pass_comment passComment,pass pass from store_item where  pass_operator is not null and status = 1 and pass = -1
+        </if>
+    </select>
+    <select id="findStoreInfoByCompanyId" resultMap="storeInfoMap">
+        select s.id,s.address,s.name,s.contact_num contactNum,s.intro,s.freight,s.status,st.name tagName,st.id stid,c.name communityName,su.true_name ownerName,su.username ownerUsername
+        from store s left join store_tag_entity ste on ste.store_id = s.id
+        left join store_tag st on ste.store_tag_id = st.id and st.status = 1
+        left join community_store cs on cs.store_id = s.id
+        left join community c on cs.community_id = c.id and c.status = 1
+        left join server_user su on su.company_id = s.id and su.status = 1
+        where s.id = #{companyId} and s.status != -1
+    </select>
+    <update id="updateStore">
+        update store set address = #{address},freight = #{freight},contact_num =#{contactNum},intro =#{intro} where id = #{id}
+    </update>
+    <delete id="deleteTag">
+        delete from store_tag_entity where store_id = #{id}
+    </delete>
+    <insert id="updateStoreTagEntity">
+        insert into store_tag_entity (id, store_id, store_tag_id) VALUES (#{id},#{storeId},#{storeTagId})
+    </insert>
+    <insert id="addAlbum">
+        insert into store_album (id, url, is_cover, store_id, created_time, status) values (#{id},#{url},#{isCover},#{storeId},#{createdTime},#{status})
+    </insert>
+    <update id="deleteAlbumById">
+        update store_album set status = -1 where id = #{id}
+    </update>
+    <select id="findAllAlbum" resultType="com.rysh.module.store.beans.StoreAlbum">
+        select * from store_album where status = 1 and store_id = #{id} order by created_time asc
+    </select>
+    <select id="findAlbumById" resultType="com.rysh.module.store.beans.StoreAlbum">
+        select * from store_album where id = #{resultId}
+    </select>
+    <select id="findImgCountById" resultType="int">
+        select count(id) from store_album where store_id = #{id} and status = 1 and is_cover = 0
+    </select>
+
+    <select id="findStoreIdByAlbumId" resultType="java.lang.String">
+        select store_id from store_album where id = #{id}
+    </select>
+    <select id="findAlbumCover" resultType="com.rysh.module.store.beans.StoreAlbum">
+        select * from store_album where store_id = #{id} and status = 1 and is_cover = 1
+    </select>
+    <select id="findInnerContent" resultType="com.rysh.module.store.beans.StoreItemView">
+        <if test="search != null and search != '' and search == 'default' ">
+            select fi.id id,fi.name name,fi.created_time createdTime,fi.description,fi.pass pass,fi.pass_comment passComment,fi.pass_operator passOperator,ss.price,ss.unit,sc.name category,fi.state state,si.url img
+            from store_item fi left join store_category sc  on fi.category_id = sc.id and fi.status = 1
+            left join store s on sc.store_id = s.id left join store_img si on si.item_id = fi.id
+            left join store_spec ss on ss.item_id = fi.id
+            where s.id = #{itemId} and si.location = 0
+        </if>
+        <if test="search != null and search != '' and search == 'up' ">
+            select fi.id id,fi.name name,fi.created_time createdTime,fi.description,fi.pass pass,fi.pass_comment passComment,fi.pass_operator passOperator,ss.price,ss.unit,sc.name category,fi.state state,si.url img
+            from store_item fi left join store_category sc  on fi.category_id = sc.id and fi.status = 1
+            left join store s on sc.store_id = s.id left join store_img si on si.item_id = fi.id
+            left join store_spec ss on ss.item_id = fi.id
+            where s.id = #{itemId}  and fi.state = 1 and si.location = 0
+        </if>
+
+        <if test="search != null and search != '' and search == 'down' ">
+            select fi.id id,fi.name name,fi.created_time createdTime,fi.description,fi.pass pass,fi.pass_comment passComment,fi.pass_operator passOperator,ss.price,ss.unit,sc.name category,fi.state state,si.url img
+            from store_item fi left join store_category sc  on fi.category_id = sc.id and fi.status = 1
+            left join store s on sc.store_id = s.id left join store_img si on si.item_id = fi.id
+            left join store_spec ss on ss.item_id = fi.id
+            where s.id = #{itemId}  and fi.state = -1  and si.location = 0
+        </if>
+
+        <if test="search != null and search != '' and search == 'init' ">
+            select fi.id id,fi.name name,fi.created_time createdTime,fi.description,fi.pass pass,fi.pass_comment passComment,fi.pass_operator passOperator,ss.price,ss.unit,sc.name category,fi.state state,si.url img
+            from store_item fi left join store_category sc  on fi.category_id = sc.id and fi.status = 1
+            left join store s on sc.store_id = s.id left join store_img si on si.item_id = fi.id
+            left join store_spec ss on ss.item_id = fi.id
+            where s.id = #{itemId}  and fi.pass = 0 and si.location = 0
+        </if>
+
+        <if test="search != null and search != '' and search == 'fail' ">
+            select fi.id id,fi.name name,fi.created_time createdTime,fi.description,fi.pass pass,fi.pass_comment passComment,fi.pass_operator passOperator,ss.price,ss.unit,sc.name category,fi.state state,si.url img
+            from store_item fi left join store_category sc  on fi.category_id = sc.id and fi.status = 1
+            left join store s on sc.store_id = s.id left join store_img si on si.item_id = fi.id
+            left join store_spec ss on ss.item_id = fi.id
+            where s.id = #{itemId} and si.location = 0 and fi.pass = -1
+        </if>
+    </select>
+    <select id="findAlbumCoverByMarketId" resultType="java.lang.String">
+        select url from store_album where store_id=#{id} and is_cover = 1 and status = 1
+    </select>
+    <select id="findStoreItemCover" resultType="java.lang.String">
+        select url from store_img where item_id = #{id} and location = 0 and status = 1
+    </select>
+    <select id="findAlbumNotCoverByMarketId" resultType="java.lang.String">
+        select url from store_album where status = 1 and is_cover !=1
+    </select>
+    <update id="applyToClient">
+        <if test="operation == 'up' ">
+            update store set status = 1 where id = #{id}
+        </if>
+        <if test="operation == 'down' ">
+            update store set status = 0 where id = #{id}
+        </if>
+    </update>
+
+
+</mapper>

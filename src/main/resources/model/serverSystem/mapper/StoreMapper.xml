@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.serverSystem.mapper.StoreMapper">
+    <resultMap id="storeList" type="com.rysh.module.serverSystem.beans.Store">
+        <result property="id" column="id"></result>
+        <result property="name" column="name"></result>
+        <result property="address" column="address"></result>
+        <result property="tel" column="contact_num"></result>
+        <result property="createdTime" column="created_time"></result>
+        <result property="lastedUpdateTime" column="lasted_update_time"></result>
+    </resultMap>
+
+    <resultMap id="areaList" type="com.rysh.module.community.beans.Area">
+        <result property="id" column="id"/>
+        <result property="areaName" column="area_name"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="lastedUpdateTime" column="lasted_update_time"/>
+        <result property="cityId" column="city_id"/>
+    </resultMap>
+
+    <insert id="addStore" parameterType="com.rysh.module.serverSystem.beans.Store">
+        insert into store (id,name,address,contact_num,freight,created_time) values (#{id},#{name},#{address},#{tel},#{freight},#{createdTime})
+    </insert>
+
+    <select id="findAllStore" resultMap="storeList">
+        select * from store where status != -1
+    </select>
+    <select id="findAllStorePlus" resultMap="storeList">
+        select * from store where status = 1
+        <if test="search != null and search != ''">
+            and (name like "%"#{search}"%")
+        </if>
+    </select>
+
+    <select id="findStoreById" parameterType="String" resultMap="storeList">
+        select * from store where id=#{storeId} and status != -1
+    </select>
+
+    <update id="updateStore" parameterType="com.rysh.module.serverSystem.beans.Store">
+        update store set name=#{name},address=#{address},contact_num=#{tel} where id=#{id}
+    </update>
+
+    <update id="deleteStore" parameterType="String">
+        update store set status=-1 where id=#{storeId}
+    </update>
+
+    <select id="searchAllRole" parameterType="String" resultMap="storeList">
+        SELECT distinct s.*
+        FROM
+        store s
+        LEFT JOIN server_user u ON s.id = u.company_id
+        LEFT JOIN community_store cs on cs.store_id=s.id
+        LEFT JOIN community c on c.id=cs.community_id
+        WHERE s.`status`!=-1 and
+	    (s. NAME LIKE "%"#{searchCondition}"%" or s.address like "%"#{searchCondition}"%" or s.contact_num like  "%"#{searchCondition}"%" or u.true_name like  "%"#{searchCondition}"%" or c.name like  "%"#{searchCondition}"%" or u.username like "%"#{searchCondition}"%")
+	</select>
+
+    <resultMap id="cityMap" type="com.rysh.module.community.beans.City">
+        <result property="id" column="id"></result>
+        <result property="cityName" column="city_name"></result>
+        <result property="createdTime" column="created_time"></result>
+        <result property="lastedUpdateTime" column="lasted_update_time"></result>
+    </resultMap>
+
+    <update id="updateCompany" parameterType="String">
+        update server_user set company_id=null where company_id=#{companyId}
+    </update>
+
+    <select id="findAreaByAreaId" parameterType="String" resultMap="areaList">
+        select * from area where id=#{areaId}
+    </select>
+
+    <select id="findCityByCityId" parameterType="String" resultMap="cityMap">
+        select * from city where id=#{cityId}
+    </select>
+    <select id="findStoreByIdToOrders" resultMap="storeList">
+        select * from store where id=#{storeId}
+    </select>
+    <insert id="addCommunityStore">
+        insert into community_store (id, community_id, store_id) VALUES (#{id},#{communityId},#{storeId})
+    </insert>
+    <select id="findCommunityIdByStoreId" resultType="java.lang.String">
+        select community_id from community_store where store_id=#{id}
+    </select>
+    <delete id="deleteCommunityStore">
+        delete from community_store where store_id=#{id}
+    </delete>
+
+
+</mapper>

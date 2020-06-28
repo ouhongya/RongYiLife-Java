@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.clientCustomerQa.mapper.CusTomerQaMapper">
+
+    <select id="findAllCusTomerQa" resultType="com.rysh.module.clientCustomerQa.beans.CusTomerQa">
+        select * from customer_qa where status = 1 order by default_sort desc
+    </select>
+</mapper>

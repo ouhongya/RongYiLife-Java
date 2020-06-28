@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.clientShoppingCart.mapper.ShoppingCartMapper">
+    <resultMap id="ShoppingCartList" type="com.rysh.module.clientShoppingCart.beans.ShoppingCart">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="unitId" column="goods_spec_id"/>
+        <result property="goodsNum" column="goods_num"/>
+        <result property="isInsider" column="is_Insider"/>
+        <result property="marketId" column="market_id"/>
+        <result property="createdTime" column="created_time"/>
+    </resultMap>
+
+    <select id="findShoppingCartByUserId" parameterType="String" resultMap="ShoppingCartList">
+        select * from shopping_cart where user_id=#{userId} and status =1
+    </select>
+
+    <update id="updateShoppcart" parameterType="com.rysh.module.clientShoppingCart.beans.ShoppingCart">
+        update shopping_cart set goods_num=#{goodsNum} where id=#{id}
+    </update>
+
+    <insert id="addShoppingCart" parameterType="com.rysh.module.clientShoppingCart.beans.ShoppingCart">
+        insert into shopping_cart(id,user_id,goods_spec_id,goods_num,is_insider,market_id,created_time) values (#{id},#{userId},#{unitId},#{goodsNum},#{isInsider},#{marketId},#{createdTime})
+    </insert>
+
+    <update id="emptyShoppingCartByUserId" parameterType="String">
+        update shopping_cart set status=-1 where user_id=#{userId}
+    </update>
+
+    <update id="deleteShoppingCartById" parameterType="String">
+        update shopping_cart set status = -1 where id=#{id}
+    </update>
+    <select id="findShoppingCartById" resultMap="ShoppingCartList">
+        select * from shopping_cart where id=#{id} and status = 1
+    </select>
+</mapper>

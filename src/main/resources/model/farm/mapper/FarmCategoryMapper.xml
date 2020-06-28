@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.rysh.module.farm.mapper.FarmCategoryMapper">
+  <resultMap id="BaseResultMap" type="com.rysh.module.farm.beans.FarmCategory">
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="farm_id" jdbcType="VARCHAR" property="farmId" />
+    <result column="created_time" jdbcType="TIMESTAMP" property="createdTime" />
+    <result column="lasted_update_time" jdbcType="TIMESTAMP" property="lastedUpdateTime" />
+  </resultMap>
+
+  <insert id="insertCategory" useGeneratedKeys="true" keyProperty="id" parameterType="com.rysh.module.farm.beans.FarmCategory">
+    <selectKey keyProperty="id" keyColumn="id" resultType="String" order="BEFORE">
+      select upper(replace(uuid(), '-', ''))
+    </selectKey>
+    insert into farm_category (id, name, farm_id,created_time,status)
+        VALUE (#{id},#{name},#{farmId},#{createdTime},#{status})
+  </insert>
+
+  <select id="findAllAvailableCategory" resultMap="BaseResultMap">
+    select * from farm_category where farm_id = #{farmId} and status = 1
+  </select>
+
+  <update id="deleteCategoryById">
+    update farm_category set status = -1 where id = #{categoryId} and farm_id = #{itemId}
+  </update>
+
+  <update id="updateNameById">
+    update farm_category set name =#{name} where id = #{id}
+  </update>
+
+  <select id="findCategoryByLogin" resultType="com.rysh.module.farm.beans.CategoryInfo">
+    <if test="mayNull == null" >
+      select t1.created_time createdTime,t1.name categoryName,t1.id id,count(t4.id) itemNum
+      from farm_category t1 left join farm t2 on t1.farm_id = t2.id and t1.status = 1
+      left join server_user t3 on t3.company_id = t2.id left join farm_item t4 on t4.category_id = t1.id and t4.status = 1
+      where t3.username = #{login} group by t1.name
+    </if>
+    <if test="mayNull != null" >
+      select t1.created_time createdTime,t1.name categoryName,t1.id id,count(t4.id) itemNum
+      from farm_category t1 left join farm t2 on t1.farm_id = t2.id and t2.id = #{mayNull}
+      left join farm_item t4 on t4.category_id = t1.id and t4.status = 1
+      where t1.status = 1 and t2.status != -1
+      group by t1.name
+    </if>
+  </select>
+
+  <select id="findCategoryById" resultMap="BaseResultMap">
+    select * from farm_category where id = #{categoryId}
+  </select>
+    <select id="findFarmCategory" resultMap="BaseResultMap">
+select DISTINCT sc.* from farm_item s,farm_category sc where s.category_id = sc.id and sc.farm_id=#{marketId} and sc.status = 1 and s.state=1 and s.status=1
+    </select>
+    <select id="findCategoryByIdToOrders" resultMap="BaseResultMap">
+      select * from farm_category where id = #{categoryId}
+    </select>
+
+
+</mapper>

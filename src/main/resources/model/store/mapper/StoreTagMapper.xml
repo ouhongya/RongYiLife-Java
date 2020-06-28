@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.store.mapper.StoreTagMapper">
+
+    <insert id="addTag">
+        insert into store_tag (id, name, created_time,operator) values (#{id},#{name},#{createdTime},#{operator})
+    </insert>
+    <select id="findTagUseCountById" resultType="int">
+        select count(id) from store_tag_entity where store_tag_id = #{id}
+    </select>
+    <update id="deleteTagById">
+        update store_tag set status = -1 where id = #{id}
+    </update>
+    <select id="findTagById" resultType="com.rysh.module.store.beans.StoreTag">
+        select * from store_tag where id = #{id}
+    </select>
+    <update id="updateTag">
+        update store_tag set name = #{name},operator=#{operator} where id = #{id}
+    </update>
+    <select id="findTagDisplay" resultType="com.rysh.module.store.beans.StoreTagDisplay">
+        select st.created_time createdTime,st.id,st.name tagName,st.operator operator,count(ste.store_id) BindingCount
+        from store_tag st left join store_tag_entity ste on st.id = ste.store_tag_id
+        where st.status != -1 group by st.name
+    </select>
+</mapper>

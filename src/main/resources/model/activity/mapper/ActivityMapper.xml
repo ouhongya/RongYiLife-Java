@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.rysh.module.activity.mapper.ActivityMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="com.rysh.module.activity.beans.Activity">
+        insert into activity (id, name, start_time, end_time, member, location, publisher,publisher_unit, contact_num,pass, pass_operator, pass_time, created_time,apply_start_time,apply_end_time,area_id)
+        values (#{id},#{name},#{startTime},#{endTime},#{member},#{location},#{publisher},#{publisherUnit},#{contactNum},#{pass},#{passOperator},#{passTime},#{createdTime},#{applyStartTime},#{applyEndTime},#{areaId})
+    </insert>
+
+    <resultMap id="activityEntity" type="com.rysh.module.activity.beans.Activity">
+        <id property="id" column="id" />
+        <result property="contactNum" column="contact_num" />
+        <result property="name" column="name" />
+        <result property="areaId" column="area_id" />
+        <result property="applyStartTime" column="apply_start_time" />
+        <result property="applyEndTime" column="apply_end_time" />
+        <result property="startTime" column="start_time" />
+        <result property="endTime" column="end_time" />
+        <result property="location" column="location" />
+        <result property="member" column="member" />
+        <result property="publisher" column="publisher" />
+        <result property="publisherUnit" column="publisher_unit" />
+        <result property="createdTime" column="created_time" />
+    </resultMap>
+
+    <resultMap id="ActivityFindAll" type="com.rysh.module.activity.beans.ActivityVo" extends="activityEntity">
+        <collection property="imgs"
+                    ofType="com.rysh.module.activity.beans.ActivityImg"
+                    column="id"
+                    javaType="java.util.List"
+                    select="findActivityImgByActivityId" />
+        <collection property="contents"
+                    ofType="com.rysh.module.activity.beans.ActivityContent"
+                    column="id"
+                    javaType="java.util.List"
+                    select="findActivityContentByActivityId" />
+    </resultMap>
+
+
+
+    <resultMap id="ActivityVoMap" type="com.rysh.module.activity.beans.ActivityVo" extends="activityEntity">
+        <collection property="imgs" ofType="com.rysh.module.activity.beans.ActivityImg">
+            <result property="location" column="imgLocation" />
+            <result property="url" column="url" />
+        </collection>
+        <collection property="contents" ofType="com.rysh.module.activity.beans.ActivityContent">
+            <result property="content" column="content" />
+            <result property="queue" column="queue" />
+        </collection>
+    </resultMap>
+
+    <update id="delete">
+        update activity set status = -1 where id = #{id}
+    </update>
+    <update id="update">
+        update activity set name = #{name} , start_time = #{startTime} , end_time = #{endTime} , member = #{member} , free_member = #{freeMember} , location = #{location} , publisher = #{publisher} ,publisher_unit = #{publisherUnit}, pass = #{pass},pass_operator = #{passOperator},apply_start_time = #{applyStartTime},apply_end_time = #{applyEndTime},area_id = #{areaId}
+        where id = #{id}
+    </update>
+    <select id="findAll" resultMap="ActivityFindAll">
+        <if test="option == 0 "> <!--默认情况-->
+            select * from activity where status = 1
+            <if test="search != null">
+                and name like CONCAT("%",#{search},"%") or location like CONCAT("%",#{search},"%")
+            </if>
+        </if>
+        <if test="option == 1 "> <!--活动未开始-->
+            select * from activity where  status = 1 and #{now} <![CDATA[ < ]]> apply_start_time
+        </if>
+        <if test="option == 2 "> <!--活动报名中-->
+            select * from activity where  status = 1 and #{now} <![CDATA[ > ]]> apply_start_time and #{now} <![CDATA[ < ]]> apply_end_time
+        </if>
+        <if test="option == 3 "> <!--活动待开始-->
+            select * from activity where  status = 1 and #{now} <![CDATA[ > ]]> apply_end_time and #{now} <![CDATA[ < ]]> start_time
+        </if>
+        <if test="option == 4 "> <!--活动进行中-->
+            select * from activity where  status = 1  and #{now} <![CDATA[ > ]]> start_time and #{now} <![CDATA[ < ]]> end_time
+        </if>
+        <if test="option == 5 "> <!--活动已结束-->
+            select * from activity where  status = 1 and #{now} <![CDATA[ > ]]> end_time
+        </if>
+    </select>
+    <insert id="activitySignUp" useGeneratedKeys="true" keyProperty="id" parameterType="com.rysh.module.activity.beans.ActivityUser">
+        <selectKey keyProperty="id" keyColumn="id"  resultType="String" order="BEFORE">
+            select upper(replace(uuid(), '-', ''))
+        </selectKey>
+         insert into activity_user (id, user_id, activity_id, name, phone, created_time) VALUES
+         (#{id},#{userId},#{activityId},#{name},#{phone},#{createdTime})
+    </insert>
+    <select id="findById" resultType="com.rysh.module.activity.beans.Activity">
+        select * from activity where id = #{activityId} and status = 1
+    </select>
+
+    <select id="findUncheck" resultType="com.rysh.module.activity.beans.Activity">
+        select a.*,ai.url from activity a left join activity_img ai on ai.activity_id = a.id and ai.location = 0
+        where a.pass = 0 and a.status = 1
+    </select>
+    <update id="check">
+        <if test="operation != null and operation != '' and operation == 'pass' ">
+            update activity set pass = 1, pass_operator = #{login} ,pass_time = #{passTime},pass_comment = #{passComment}
+            where status = 1 and id in
+            <foreach collection="ids" item="id" open="(" separator="," close=")" >
+                #{id}
+            </foreach>
+        </if>
+
+        <if test="operation != null and operation != '' and operation == 'fail' ">
+            update activity set pass = -1, pass_operator = #{login} ,pass_time = #{passTime},pass_comment = #{passComment}
+            where status = 1 and id in
+            <foreach collection="ids" item="id" open="(" separator="," close=")" >
+                #{id}
+            </foreach>
+        </if>
+    </update>
+    <select id="findCheckHistory" resultType="com.rysh.module.activity.beans.Activity">
+        <if test="search != null and search != '' and search == 'default'">
+            select * from activity where pass_operator != 'system' and status = 1
+        </if>
+        <if test="search != null and search != '' and search == 'pass'">
+            select * from activity where pass_operator != 'system' and status = 1 and pass = 1
+        </if>
+        <if test="search != null and search != '' and search == 'fail'">
+            select * from activity where pass_operator != 'system' and status = 1 and pass = -1
+        </if>
+    </select>
+    <update id="signMany">
+        update activity_user set is_join = 1 and status = 1 where id in
+        <foreach collection="ids" open="(" close=")" separator="," item="id" >
+            #{id}
+        </foreach>
+    </update>
+    <select id="findJoinUserByActivityId" resultType="com.rysh.module.activity.beans.JoinActivityUser">
+        select  au.id id,au.name,au.phone,a.apply_start_time applyTime,au.is_join joined
+        from activity_user au,activity a
+        where au.activity_id = a.id and au.is_join != -1 and a.status = 1 and au.status = 1 and au.activity_id = #{id}
+    </select>
+
+    <update id="reduceNum">
+        update activity set free_member = free_member - 1 where id = #{activityId}
+    </update>
+    <select id="ActivityStatisticsByTime" resultType="com.rysh.module.activity.beans.ActivityStatistics">
+        select a.end_time,au.name,au.phone,count(a.name) applyTime,count(if(au.is_join = 1,1,null)) joinTime
+        from activity a,activity_user au
+        where au.activity_id = a.id and a.status = 1 and au.status = 1 and a.pass = 1 and a.end_time &gt; #{startTime} and a.end_time  &lt; #{endTime}  group by name
+    </select>
+    <select id="findClientRank" resultType="com.rysh.module.activity.beans.ClientRank">
+        select ri.sequence no,ri.name name,ri.url avatar,r.url banner,r.intro introduction
+        from ranking_user_item ri left join ranking_user r on ri.ranking_user_id = r.id
+        where ri.status = 1 and r.status = 1 order by no desc
+    </select>
+    <select id="isExist" resultType="int">
+        select count(id) from activity_user
+        where activity_id = #{activityId} and user_id = #{userId}
+    </select>
+    <select id="checkHasUserJoin" resultType="int">
+        select count(id) from activity_user where activity_id = #{id}
+    </select>
+    <select id="findByName" resultType="com.rysh.module.activity.beans.Activity">
+        select * from activity where name like CONCAT("%",#{key},"%") or description like CONCAT("%",#{key},"%") or location like CONCAT("%",#{key},"%")
+    </select>
+    <insert id="addActivityImg">
+        insert into activity_img (id, url, location,activity_id, created_time, status) values (#{id},#{url},#{location},#{activityId},#{createdTime},#{status})
+    </insert>
+    <insert id="addActivityContent">
+        insert into activity_content (id, content, queue, activity_id) values (#{id},#{content},#{queue},#{activityId})
+    </insert>
+    <delete id="deleteActivityImg">
+        delete from activity_img where activity_id = #{id}
+    </delete>
+    <insert id="updateActivityImg">
+        insert into activity_img (id, url, activity_id, created_time, status,location)
+        values (#{id},#{url},#{activityId},#{createdTime},#{status},#{location})
+    </insert>
+    <delete id="deleteActivityContent">
+        delete from activity_content where activity_id = #{id}
+    </delete>
+    <insert id="updateActivityContent">
+        insert into activity_content (id, content, queue, activity_id) values (#{id},#{content},#{queue},#{activityId})
+    </insert>
+    <select id="findActivityImgByActivityId" resultType="com.rysh.module.activity.beans.ActivityImg">
+        select * from activity_img where status = 1 and activity_id = #{id} order by location asc
+    </select>
+    <select id="findActivityContentByActivityId" resultType="com.rysh.module.activity.beans.ActivityContent">
+        select * from activity_content where activity_id = #{id} order by queue asc
+    </select>
+
+    <select id="findActivityAllInfoById" resultMap="ActivityVoMap">
+        select a.*,ai.url,ai.location imgLocation,ac.content,ac.queue
+        from activity a left join activity_img ai on ai.activity_id = a.id
+        left join activity_content ac on ac.activity_id = a.id
+        where  a.id = #{id}
+    </select>
+    <select id="findJoinedNumByActivityId" resultType="java.lang.Integer">
+        select count(id) from activity_user where activity_id = #{id}
+    </select>
+
+</mapper>

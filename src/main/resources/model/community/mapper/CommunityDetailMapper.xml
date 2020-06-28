@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.rysh.module.community.mapper.CommunityDetailMapper">
+
+    <resultMap id="communityDetailMap" type="com.rysh.module.community.beans.CommunityDetail">
+        <result property="id" column="id" />
+        <result property="building" column="building" />
+        <result property="unit" column="unit" />
+        <result property="room" column="room" />
+        <result property="createdTime" column="created_time" />
+        <result property="lastedUpdateTime" column="lasted_update_time" />
+        <result property="communityId" column="community_id" />
+    </resultMap>
+
+    <insert id="addCommunityDetail" useGeneratedKeys="true" keyProperty="id" parameterType="communitydetail">
+        <selectKey keyProperty="id" keyColumn="id" resultType="String" order="BEFORE">
+            select replace(uuid(), '-', '')
+        </selectKey>
+        insert into community_detail (`id`,`building`,`unit`,`room`,`created_time`,`community_id`) value (#{id},#{building},#{unit},#{room},#{createdTime},#{communityId})
+    </insert>
+
+    <select id="checkHasExists" parameterType="com.rysh.module.community.beans.CommunityDetail" resultType="int">
+        select count(id) from community_detail
+        where building = #{building}
+          and unit = #{unit}
+          and room = #{room}
+          and community_id = #{communityId};
+    </select>
+
+    <select id="getId" resultType="java.lang.String" parameterType="com.rysh.module.community.beans.CommunityDetail">
+        select `id` from community_detail
+        where building = #{building}
+            and unit = #{unit}
+            and room = #{room}
+            and community_id = #{communityId};
+    </select>
+
+    <select id="getHouseNumberById" parameterType="String" resultType="com.rysh.module.community.beans.CommunityDetail">
+        select `building`,`unit`,`room` from community_detail where id = #{addressId};
+    </select>
+
+</mapper>

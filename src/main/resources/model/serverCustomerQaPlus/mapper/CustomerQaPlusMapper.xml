@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.serverCustomerQa.mapper.CustomerQaPlusMapper">
+
+    <select id="findAllCustomerQa" resultType="com.rysh.module.serverCustomerQa.beans.CustomerQaPlus">
+        select * from customer_qa where status!= -1 order by default_sort desc
+    </select>
+    <insert id="addCustomerQa">
+        insert into customer_qa (id, question, answer, operator, created_time,default_sort) values (#{customerQaPlus.id},#{customerQaPlus.question},#{customerQaPlus.answer},#{name},#{date},#{customerQaPlus.defaultSort})
+    </insert>
+    <update id="updateCustomerQaPlus">
+        update customer_qa set question=#{customerQaPlus.question},answer=#{customerQaPlus.answer},operator=#{name},default_sort=#{customerQaPlus.defaultSort} where id=#{customerQaPlus.id}
+    </update>
+    <update id="updateCustomerQaUpperLower">
+        update customer_qa set status=#{status},operator=#{name} where id=#{customerQaId}
+    </update>
+    <update id="deleteCustomerQa">
+        update customer_qa set status = -1 where id=#{id}
+    </update>
+    <update id="updateSort">
+        update customer_qa set default_sort = #{value} where id = #{id}
+    </update>
+</mapper>

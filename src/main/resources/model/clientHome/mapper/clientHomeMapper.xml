@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.clientHome.mapper.HomeSearchMapper">
+
+    <resultMap id="GrangeItemAndSpecAndImg" type="com.rysh.module.clientHome.beans.GrangeItemAndSpecAndImg">
+        <result property="grangeItem.id" column="gid" />
+        <result property="grangeItem.name" column="gname" />
+        <result property="grangeItem.description" column="gdescription" />
+        <result property="grangeImg.url" column="gurl" />
+        <result property="grangeSpec.price" column="gprice" />
+        <result property="grangeSpec.unit" column="gunit" />
+    </resultMap>
+    
+    <resultMap id="FarmItemAndSpecAndImg" type="com.rysh.module.clientHome.beans.FarmItemAndSpecAndImg">
+        <result property="farmItem.id" column="gid" />
+        <result property="farmItem.name" column="gname" />
+        <result property="farmItem.description" column="gdescription" />
+        <result property="farmImg.url" column="gurl" />
+        <result property="farmSpec.price" column="gprice" />
+        <result property="farmSpec.unit" column="gunit" />
+    </resultMap>
+
+    <select id="findGrange" resultType="com.rysh.module.grange.beans.Grange">
+        select * from grange where status = 1 and name like CONCAT('%',#{search},'%') or address like CONCAT('%',#{search},'%')
+    </select>
+    <select id="findFarm" resultType="com.rysh.module.farm.beans.Farm">
+        select * from farm where status = 1 and name like CONCAT('%',#{search},'%') or address like CONCAT('%',#{search},'%')
+    </select>
+    <select id="findGrangeItem" resultMap="GrangeItemAndSpecAndImg">
+        select gi.name gname,gi.id gid,gi.description gdescription,gg.url gurl,gs.price gprice,gs.unit gunit
+        from grange_item gi left join grange_spec gs on gs.item_id = gi.id left join grange_img gg on gg.item_id = gi.id and gg.location = 1
+        where gi.state = 1 and gi.state = 1 and gg.status = 1 and gi.name like CONCAT('%',#{search},'%') or gi.description like CONCAT('%',#{search},'%')
+    </select>
+    <select id="findFarmItem" resultMap="FarmItemAndSpecAndImg">
+        select gi.name gname,gi.id gid,gi.description gdescription,gg.url gurl,gs.price gprice,gs.unit gunit
+        from farm_item gi left join farm_spec gs on gs.item_id = gi.id left join farm_img gg on gg.item_id = gi.id and gg.location = 1
+        where gi.state = 1 and gi.state = 1 and gg.status = 1 and gi.name like CONCAT('%',#{search},'%') or gi.description like CONCAT('%',#{search},'%')
+    </select>
+    <select id="homeSearch" resultType="com.rysh.module.clientHome.beans.SearchResponse">
+        SELECT fi.id, fi.name, fm.url, fs.price, fs.unit FROM farm_item AS fi INNER JOIN farm_img AS fm ON fi.id = fm.item_id
+         INNER JOIN farm_spec AS fs ON fs.item_id = fi.id
+            WHERE fm.location = 1 AND  fi.`name` LIKE CONCAT('%',#{search},'%')
+        UNION
+         SELECT fi.id, fi.name, fm.url, fs.price, fs.unit FROM grange_item AS fi INNER JOIN grange_img AS fm ON fi.id = fm.item_id
+         INNER JOIN grange_spec AS fs ON fs.item_id = fi.id
+            WHERE fm.location = 1 AND  fi.`name` LIKE CONCAT('%',#{search},'%')
+    </select>
+    <select id="findGarbageCategoryByName" resultType="com.rysh.module.clientHome.beans.ClientGarbage">
+        select g.name garbageName,gc.name garbageCategory
+        from
+        garbage g inner join garbage_category gc on g.category_id = gc.id and g.status = 1 and gc.status = 1
+        inner join city c on gc.city_id = c.id and c.id = #{cityId}
+        where g.name like CONCAT('%',#{name},'%')
+    </select>
+</mapper>

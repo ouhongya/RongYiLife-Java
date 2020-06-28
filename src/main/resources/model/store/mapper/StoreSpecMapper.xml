@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.store.mapper.StoreSpecMapper">
+
+    <resultMap id="BaseResultMap" type="com.rysh.module.store.beans.StoreSpec">
+      <id column="id" jdbcType="VARCHAR" property="id" />
+      <result column="price" jdbcType="DECIMAL" property="price" />
+      <result column="unit" jdbcType="VARCHAR" property="unit" />
+      <result column="created_time" jdbcType="TIMESTAMP" property="createdTime" />
+      <result column="lasted_update_time" jdbcType="TIMESTAMP" property="lastedUpdateTime" />
+      <result column="item_id" jdbcType="VARCHAR" property="itemId" />
+    </resultMap>
+
+    <insert id="addSpec">
+      <selectKey keyProperty="id" keyColumn="id" resultType="String" order="BEFORE">
+          select upper(replace(uuid(), '-', ''))
+      </selectKey>
+      insert into store_spec (id, price, unit, created_time, item_id)
+      value (#{id},#{price},#{unit},#{createdTime},#{itemId})
+    </insert>
+    
+    <update id="updateSpec">
+        update store_spec set price = #{price}, unit = #{unit} where item_id = #{itemId}
+    </update>
+
+    <select id="findStoreSpecByItemId" parameterType="String" resultMap="BaseResultMap">
+        select * from store_spec where item_id=#{itemId}
+    </select>
+
+    <select id="findStoreSpecsByItemId" resultMap="BaseResultMap">
+        select * from store_spec where item_id=#{itemId}
+    </select>
+    <select id="findById" resultMap="BaseResultMap">
+        select * from store_spec where id=#{productSpecId}
+    </select>
+</mapper>

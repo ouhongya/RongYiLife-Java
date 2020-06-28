@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.clientShoppingAddress.mapper.ShoppingAddressMapper">
+    <resultMap id="shoppingAddressList" type="com.rysh.module.clientShoppingAddress.beans.ShoppingAddress">
+        <id property="id" column="id"></id>
+        <result property="userId" column="user_id"></result>
+        <result property="name" column="name"></result>
+        <result property="address" column="address"></result>
+        <result property="phone" column="phone"></result>
+        <result property="zipCode" column="zip_code"></result>
+        <result property="createdTime" column="created_time"></result>
+    </resultMap>
+    <insert id="addAddress" parameterType="com.rysh.module.clientShoppingAddress.beans.ShoppingAddress">
+        insert into shipping_address (id, user_id, name, address, phone, zip_code, created_time) VALUES (#{id},#{userId},#{name},#{address},#{phone},#{zipCode},#{createdTime})
+    </insert>
+    <select id="findAllShoppingAddress" resultMap="shoppingAddressList" parameterType="String">
+        select * from shipping_address where user_id=#{userId} and status = 1 order by created_time
+    </select>
+    <select id="findShoppingAddressById" resultMap="shoppingAddressList" parameterType="String">
+        select * from shipping_address where id=#{shoppingAddressId} and status = 1
+    </select>
+    <update id="deleteShoppingAddress" parameterType="String">
+        update shipping_address set status = -1 where id=#{shoppingAddressId}
+    </update>
+    <update id="updateShoppingAddress" parameterType="com.rysh.module.clientShoppingAddress.beans.ShoppingAddress">
+        update shipping_address set name=#{name},address=#{address},phone=#{phone},zip_code=#{zipCode},state=#{state} where id=#{id}
+    </update>
+    <update id="updateDefaultShoppingAddressByUserId">
+        update shipping_address set state = 0 where user_id=#{userId}
+    </update>
+    <update id="updateDefaultShoppingAddressById">
+        update shipping_address set state = 1 where id=#{id}
+    </update>
+
+
+</mapper>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.rysh.module.farm.mapper.FarmImgMapper">
+
+
+    <insert id="addImg" useGeneratedKeys="true" keyProperty="id" parameterType="com.rysh.module.farm.beans.FarmImg">
+        <selectKey keyProperty="id" keyColumn="id" resultType="String" order="BEFORE">
+            select upper(replace(uuid(), '-', ''))
+        </selectKey>
+        insert into farm_img (id, url, item_id,created_time,location) VALUE
+        (#{id},#{url},#{farmItemId},#{createdTime},#{location})
+    </insert>
+
+    <update id="updateById" parameterType="com.rysh.module.farm.beans.FarmImg">
+       update farm_item_img set url = #{url},status = #{status} where id = #{id}
+    </update>
+    <delete id="dropByItemId">
+        delete from farm_img where item_id = #{farmItemId}
+    </delete>
+
+    <select id="findFarmImgUrlByItemId" parameterType="String" resultType="String">
+        select url from farm_img where item_id=#{itemId} and status = 1
+    </select>
+    <select id="findFarmBannerImgUrlByItemId" resultType="java.lang.String">
+        select url from farm_img where item_id=#{goodsId} and status = 1 and location != -1
+    </select>
+    <select id="findFarmDetailImgUrl" resultType="java.lang.String">
+        select url from farm_img where item_id=#{goodsId} and status = 1 and location = -1
+    </select>
+
+
+</mapper>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.garbage.mapper.GarbageCategoryMapper">
+  <resultMap id="BaseResultMap" type="com.rysh.module.garbage.beans.GarbageCategory">
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="city_id" jdbcType="VARCHAR" property="cityId" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="color" jdbcType="VARCHAR" property="color" />
+    <result column="created_time" jdbcType="TIMESTAMP" property="createdTime" />
+    <result column="lasted_update_time" jdbcType="TIMESTAMP" property="lastedUpdateTime" />
+    <result column="status" jdbcType="TINYINT" property="status" />
+  </resultMap>
+
+  <insert id="add">
+    <selectKey keyProperty="id" keyColumn="id" resultType="String" order="BEFORE">
+      select upper(replace(uuid(), '-', ''))
+    </selectKey>
+    insert into garbage_category (id, city_id, name, color, created_time,url)
+    values (#{id},#{cityId},#{name},#{color},#{createdTime},#{url})
+  </insert>
+
+  <update id="deleteById">
+    update garbage_category set status = -1 where id =#{id}
+  </update>
+
+  <select id="countCategory" resultType="int">
+    select count(t2.id)
+    from garbage_category t1 left join garbage t2 on t2.category_id = t1.id and t1.status = 1 and t2.status =1
+    where t1.id = #{id}
+  </select>
+
+  <update id="update">
+    update garbage_category set name=#{name},color=#{color},url = #{url} where id = #{id}
+  </update>
+
+  <select id="findAll" resultType="com.rysh.module.garbage.beans.ResponseCategory">
+    select t1.name,t1.color,t1.id,t1.url,count(t2.id) num
+    from garbage_category t1
+    left join garbage t2 on t2.category_id = t1.id and t1.status =1 and t2.status = 1
+    left join city t3 on t1.city_id = t3.id and t1.status =1
+    where t3.id = #{id}
+    group by t1.id
+  </select>
+
+  <select id="isExist" resultType="Integer">
+    select * from
+    city t1,garbage_category t2
+    where t2.city_id = t1.id
+    and t1.id = #{cityId}
+    and t2.status = 1
+    and t2.name = #{name}
+  </select>
+  <select id="findGarbageCategoryByCityId" resultMap="BaseResultMap">
+    select * from garbage_category where city_id=#{id} and status = 1 order by location desc
+  </select>
+
+
+</mapper>

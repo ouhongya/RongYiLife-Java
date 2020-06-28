@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.rysh.module.community.mapper.CityMapper">
+    <insert id="addCity" useGeneratedKeys="true" keyProperty="id" parameterType="com.rysh.module.community.beans.City">
+        <selectKey keyProperty="id" keyColumn="id" resultType="String" order="BEFORE">
+            select upper(replace(uuid(), '-', ''))
+        </selectKey>
+        insert into city (id, city_name, created_time)  values (#{id},#{cityName},#{createdTime})
+    </insert>
+
+    <resultMap id="cityMap" type="com.rysh.module.community.beans.City">
+        <result property="id" column="id"></result>
+        <result property="cityName" column="city_name"></result>
+        <result property="createdTime" column="created_time"></result>
+        <result property="lastedUpdateTime" column="lasted_update_time"></result>
+        <result property="cityCode" column="city_code" />
+    </resultMap>
+
+    <resultMap id="cityAreaTree" type="com.rysh.module.community.beans.City">
+        <result property="id" column="cid"></result>
+        <result property="cityName" column="cname"></result>
+        <collection property="areas" ofType="com.rysh.module.community.beans.Area">
+            <result property="id" column="aid" />
+            <result property="areaName" column="aname" />
+        </collection>
+    </resultMap>
+    
+    <resultMap id="cityAreaCommunityTree" type="com.rysh.module.community.beans.City" >
+        <result property="id" column="cid"></result>
+        <result property="cityName" column="cname"></result>
+        <collection property="areas" ofType="com.rysh.module.community.beans.Area">
+            <result property="id" column="aid" />
+            <result property="areaName" column="aname" />
+            <collection property="areas" ofType="com.rysh.module.community.beans.Community">
+                <result property="id" column="mid" />
+                <result property="name" column="mname" />
+                <result property="address" column="address" />
+            </collection>
+        </collection>
+    </resultMap>
+
+
+    <update id="updateCity" parameterType="com.rysh.module.community.beans.City">
+        update city set city_name = #{newName} where id = #{id}
+    </update>
+
+    <select id="queryByCityName" parameterType="String" resultType="com.rysh.module.community.beans.City">
+        select * from `city` where `city_name` = #{cityName}
+    </select>
+    <select id="findAllCity" resultType="com.rysh.module.community.beans.City">
+        select * from city
+    </select>
+
+    <select id="getUserCityByUserAddress" resultType="String" parameterType="String">
+        select `city_name` from city where id in (
+            select `city_id` from area where id in (
+                select `area_id` from community where id in (
+                    select `community_id` from community_detail where id = #{addressId}
+                )
+            )
+        )
+    </select>
+    <select id="findAllCityAndArea" resultMap="cityAreaTree">
+        select t1.id cid,t2.id aid,t1.city_name cname,t2.area_name aname
+        from city t1 left join area t2 on t2.city_id = t1.id
+    </select>
+    <select id="findCityAndChild" resultMap="cityAreaCommunityTree">
+        select t1.id cid,t2.id aid,t1.city_name cname,t2.area_name aname,t3.id mid,t3.address address,t3.name mname
+        from city t1 left join area t2 on t2.city_id = t1.id left join community t3 on t3.area_id  = t2.id where t3.area_id  = t2.id  and t3.status = 1
+    </select>
+    <select id="findAllClientCity" resultType="com.rysh.module.community.beans.ClientCity">
+        SELECT DISTINCT city.id id, city.city_name name FROM community
+        INNER JOIN area ON area.id = community.area_id
+        INNER JOIN city ON city.id = area.city_id
+    </select>
+    <select id="findCityById" parameterType="String" resultMap="cityMap">
+        select * from city where id=#{cityId}
+    </select>
+    <select id="findIdByCityName" resultType="java.lang.String">
+        select id from city where city_name = #{cityName}
+    </select>
+</mapper>

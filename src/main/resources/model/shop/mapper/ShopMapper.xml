@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.shop.mapper.ShopMapper">
+    <resultMap id="BaseResultMap" type="com.rysh.module.shop.beans.Shop">
+      <id column="id" jdbcType="VARCHAR" property="id" />
+      <result column="name" jdbcType="VARCHAR" property="name" />
+      <result column="address" jdbcType="VARCHAR" property="address" />
+      <result column="created_time" jdbcType="TIMESTAMP" property="createdTime" />
+      <result column="lasted_update_time" jdbcType="TIMESTAMP" property="lastedUpdateTime" />
+      <result column="status" jdbcType="TINYINT" property="status" />
+    </resultMap>
+
+    <resultMap id="responseMap" type="com.rysh.module.shop.beans.ShopParam" >
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="description" property="description" />
+        <result column="category_id" property="categoryId" />
+        <association property="spec" javaType="com.rysh.module.shop.beans.ShopSpec">
+            <result column="price" property="price" />
+            <result column="unit" property="unit" />
+        </association>
+        <collection property="imgUrls" ofType="com.rysh.module.shop.beans.ShopImg">
+            <result column="url" property="url" />
+            <result column="location" property="location" />
+        </collection>
+    </resultMap>
+
+    <select id="findShopByLogin" resultMap="BaseResultMap">
+      select distinct t1.*
+      from shop t1,server_user t2
+      where t2.company_id = t1.id and t2.username = #{login}
+    </select>
+
+    <select id="findBySearch" resultMap="BaseResultMap">
+        select
+        distinct f.*
+        from
+        server_user u
+        right join shop f on
+        u.company_id = f.id
+        where
+        f.status = 1
+        <if test="search != null and search != ''">
+            and (f.name like "%"#{search}"%" or f.address like "%"#{search}"%" or u.true_name like "%"#{search}"%" or u.username like "%"#{search}"%")
+        </if>
+    </select>
+
+    <insert id="insertNew">
+        insert into store_item
+        (id, name, description,category_id, status,state, oprerator, created_time,pass)
+        value (#{id},#{name},#{description},#{categoryId},#{status},#{state},#{oprerator},#{createdTime},#{pass})
+    </insert>
+
+    <select id="findUncheck" resultMap="responseMap">
+        select t1.id,t1.name,t1.description,t2.url,t2.location,t3.name categotyName,t4.price,t4.unit
+        from store_item t1 left join store_img t2 on t2.item_id = t1.id left join store_category t3 on t3.id = t1.category_id left join store_spec t4 on t4.item_id = t1.id
+        where t1.pass = 0 and t1.status = 1
+    </select>
+
+    <update id="updateStatus">
+        update store_item set status = -1 ,oprerator = #{operator} where id = #{id}
+    </update>
+    
+    <update id="updateManyById">
+        <if test="operator != null and operator != '' and operation == 'pass'">
+            update store_item set pass_operator=#{operator}, pass = 1,state = 1,pass_time=#{passTime},pass_comment=#{passComment} where status = 1 and id in
+            <foreach collection="ids" item="id" open="(" separator="," close=")" >
+                #{id}
+            </foreach>
+        </if>
+        <if test="operator != null and operator != '' and operation == 'fail'">
+            update store_item set pass_operator=#{operator}, pass = -1,state = 0,pass_time=#{passTime},pass_comment=#{passComment} where status = 1 and id in
+            <foreach collection="ids" item="id" open="(" separator="," close=")" >
+                #{id}
+            </foreach>
+        </if>
+    </update>
+    
+    <select id="findByCondition" resultType="com.rysh.module.shop.beans.ShopItemView">
+        <if test="search != null and search != '' and search == 'default'">
+            select distinct t1.id id,t2.url img,t1.name name,t4.price price,t4.unit unit,t3.name category,t1.state state,t1.description,t1.created_time createdTime,t1.pass pass,t1.pass_comment passComment,t6.id farmId
+            from
+            store_item t1,store_img t2,store_category t3,store_spec t4,server_user t5,store t6,server_user t7
+            where
+            t1.category_id = t3.id and t3.store_id = t6.id and t2.item_id = t1.id and t7.company_id = t6.id and t2.location = 1 and t4.item_id = t1.id and t1.status = 1 and t7.username = #{login}
+        </if>
+
+        <if test="search != null and search != '' and search == 'up'">
+            select distinct t1.id id,t2.url img,t1.name name,t4.price price,t4.unit unit,t3.name category,t1.state state,t1.description,t1.created_time createdTime,t1.pass pass,t1.pass_comment passComment,t6.id farmId
+            from
+            store_item t1,store_img t2,store_category t3,store_spec t4,server_user t5,store t6,server_user t7
+            where
+            t1.category_id = t3.id and t3.store_id = t6.id and t2.item_id = t1.id and t7.company_id = t6.id and t2.location = 1 and t4.item_id = t1.id and t1.status = 1 and t1.state = 1 and t1.pass = 1 and t7.username = #{login}
+        </if>
+
+        <if test="search != null and search != '' and search == 'down'">
+            select distinct t1.id id,t2.url img,t1.name name,t4.price price,t4.unit unit,t3.name category,t1.state state,t1.description,t1.created_time createdTime,t1.pass pass,t1.pass_comment passComment,t6.id farmId
+            from
+            store_item t1,store_img t2,store_category t3,store_spec t4,server_user t5,store t6,server_user t7
+            where
+            t1.category_id = t3.id and t3.store_id = t6.id and t2.item_id = t1.id and t7.company_id = t6.id and t2.location = 1 and t4.item_id = t1.id and t1.status = 1 and t1.state = -1 and t1.pass = 1 and t7.username = #{login}
+        </if>
+
+        <if test="search != null and search != '' and search == 'init'">
+            select distinct t1.id id,t2.url img,t1.name name,t4.price price,t4.unit unit,t3.name category,t1.state state,t1.description,t1.created_time createdTime,t1.pass pass,t1.pass_comment passComment,t6.id farmId
+            from
+            store_item t1,store_img t2,store_category t3,store_spec t4,server_user t5,store t6,server_user t7
+            where
+            t1.category_id = t3.id and t3.store_id = t6.id and t2.item_id = t1.id and t7.company_id = t6.id and t2.location = 1 and t4.item_id = t1.id and t1.status = 1 and t1.state = 0 and t1.pass = 0 and t7.username = #{login}
+        </if>
+
+        <if test="search != null and search != '' and search == 'fail'">
+            select distinct t1.id id,t2.url img,t1.name name,t4.price price,t4.unit unit,t3.name category,t1.state state,t1.description,t1.created_time createdTime,t1.pass pass,t1.pass_comment passComment,t6.id farmId
+            from
+            store_item t1,store_img t2,store_category t3,store_spec t4,server_user t5,store t6,server_user t7
+            where
+            t1.category_id = t3.id and t3.store_id = t6.id and t2.item_id = t1.id and t7.company_id = t6.id and t2.location = 1 and t4.item_id = t1.id and t1.status = 1 and t1.pass = -1 and t7.username = #{login}
+        </if>
+    </select>
+    
+    <select id="findById" resultMap="BaseResultMap">
+        select * from shop where id = #{id}
+    </select>
+
+    <update id="updateItem">
+        update store_item set name = #{name},category_id = #{categoryId}, pass = #{pass},
+        oprerator = #{oprerator},description = #{description} where id = #{id}
+    </update>
+
+    <update id="itemUpOrDownShelf">
+        update store_item set oprerator=#{operator},
+        <if test="operation != null and operation == 'up'">
+            state = 1
+        </if>
+        <if test="operation != null and operation == 'down'">
+            state = -1
+        </if>
+        where status = 1 and pass = 1 and id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")" >
+            #{id}
+        </foreach>
+    </update>
+
+    <select id="findCountByFarmId" resultType="int">
+        select count(id)
+        from store_item where category_id = #{categoryId}
+    </select>
+    
+    <select id="findUncheckById" resultMap="responseMap">
+        select t1.id,t1.name,t1.description,t2.url,t2.location,t3.name categotyName,t4.price,t4.unit
+        from store_item t1 left join store_img t2 on t2.item_id = t1.id left join store_category t3 on t3.id = t1.category_id left join store_spec t4 on t4.item_id = t1.id
+        where t1.pass = 0 and t1.id = #{id}
+    </select>
+
+    <update id="deleteById">
+        update store_item set status = -1 where id = #{id}
+    </update>
+
+    <select id="findCheckHistory" resultType="com.rysh.module.shop.beans.ShopItemView">
+        <if test="search != null and search != '' and search == 'default'">
+            select name,description,pass_operator passOperator,pass_time passTime,pass_comment passComment,pass pass from store_item where oprerator != 'system' and status = 1
+        </if>
+        <if test="search != null and search != '' and search == 'pass'">
+            select name,description,pass_operator passOperator,pass_time passTime,pass_comment passComment,pass pass from store_item where oprerator != 'system' and status = 1 and pass = 1
+        </if>
+        <if test="search != null and search != '' and search == 'fail'">
+            select name,description,pass_operator passOperator,pass_time passTime,pass_comment passComment,pass pass from store_item where oprerator != 'system' and status = 1 and pass = -1
+        </if>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="com.rysh.module.shop.beans.Shop">
+        <selectKey keyProperty="id" keyColumn="id" resultType="String" order="BEFORE">
+            select replace(uuid(), '-', '')
+        </selectKey>
+        insert into shop (id, name, address, created_time) value (#{id},#{name},#{address},#{createdTime})
+    </insert>
+
+    <select id="shopCount" resultType="int">
+        select count (id) from shop
+    </select>
+
+    <update id="update">
+        update shop set name = #{name},address = #{address}
+        where id = #{id}
+    </update>
+
+    <update id="updateStatusById">
+        update shop set status = -1 where id = #{id}
+    </update>
+    <select id="findByIdToOrders" resultMap="BaseResultMap">
+        select * from shop where id = #{id}
+    </select>
+
+</mapper>

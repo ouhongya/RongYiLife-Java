@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.farm.mapper.FarmItemMapper">
+
+  <resultMap id="BaseResultMap" type="com.rysh.module.farm.beans.FarmItem">
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="category_id" jdbcType="VARCHAR" property="categoryId" />
+    <result column="status" jdbcType="INTEGER" property="status" />
+    <result column="oprerator" jdbcType="VARCHAR" property="oprerator" />
+    <result column="created_time" jdbcType="TIMESTAMP" property="createdTime" />
+    <result column="lasted_update_time" jdbcType="TIMESTAMP" property="lastedUpdateTime" />
+    <result column="state" javaType="integer" property="state" />
+  </resultMap>
+  
+  <resultMap id="responseMap" type="com.rysh.module.farm.beans.FarmParam" >
+    <id column="id" property="id" />
+    <result column="name" property="name" />
+    <result column="description" property="description" />
+    <result column="category_id" property="categoryId" />
+    <association property="spec" javaType="com.rysh.module.farm.beans.FarmSpec">
+      <result column="price" property="price" />
+      <result column="unit" property="unit" />
+    </association>
+    <collection property="imgUrls" ofType="com.rysh.module.farm.beans.FarmImg">
+      <result column="url" property="url" />
+      <result column="location" property="location" />
+    </collection>
+  </resultMap>
+
+  <resultMap id="checkMap" type="com.rysh.module.farm.beans.FarmParam" >
+    <id column="id" property="id" />
+    <result column="name" property="name" />
+    <result column="description" property="description" />
+    <result column="categotyName" property="categoryId" />
+    <association property="spec" javaType="com.rysh.module.farm.beans.FarmSpec">
+      <result column="price" property="price" />
+      <result column="unit" property="unit" />
+    </association>
+    <collection property="imgUrls" ofType="com.rysh.module.farm.beans.FarmImg">
+      <result column="url" property="url" />
+      <result column="location" property="location" />
+    </collection>
+  </resultMap>
+
+
+
+  <insert id="insertNew"  parameterType="com.rysh.module.farm.beans.FarmItem">
+    insert into farm_item
+    (id, name, description,category_id, status,state, oprerator, created_time,pass)
+        value (#{id},#{name},#{description},#{categoryId},#{status},#{state},#{oprerator},#{createdTime},#{pass})
+  </insert>
+
+    <select id="findAllByStatus" resultMap="BaseResultMap">
+      select * from farm_item where state = 0 and oprerator = 'system'
+    </select>
+
+  <select id="findPrimaryKey" resultType="java.lang.String">
+    select id from farm_item where created_time = #{date,jdbcType=TIMESTAMP}
+  </select>
+
+  <update id="updateSattus" parameterType="String">
+        update farm_item set status = -1 ,oprerator = #{operator} where id = #{id}
+  </update>
+
+  <select id="findUncheck" resultMap="checkMap">
+    select t1.id,t1.name,t1.description,t2.url,t2.location,t3.name categotyName,t4.price,t4.unit
+    from farm_item t1 left join farm_img t2 on t2.item_id = t1.id left join farm_category t3 on t3.id = t1.category_id left join farm_spec t4 on t4.item_id = t1.id
+    where t1.pass = 0 and t1.status = 1
+  </select>
+
+  <update id="updateManyById">
+    <if test="operation != null and operation != '' and operation == 'pass'">
+      update farm_item set pass_operator=#{operator}, pass = 1,state = 1,pass_time=#{passTime},pass_comment=#{passComment},oprerator = #{operator} where status = 1 and id in
+      <foreach collection="ids" item="id" open="(" separator="," close=")" >
+        #{id}
+      </foreach>
+    </if>
+    <if test="operation != null and operation != '' and operation == 'fail'">
+      update farm_item set pass_operator=#{operator}, pass = -1,state = 0,pass_time=#{passTime},pass_comment=#{passComment},oprerator = #{operator} where status = 1 and id in
+      <foreach collection="ids" item="id" open="(" separator="," close=")" >
+        #{id}
+      </foreach>
+    </if>
+  </update>
+
+  <select id="findByCondition" resultType="com.rysh.module.farm.beans.FarmItemView">
+    <if test="search != null and search != '' and search == 'default'">
+      select distinct t1.id id,t2.url img,t1.name name,t4.price price,t4.unit unit,t3.name category,t1.state state,t1.description,t1.created_time createdTime,t1.pass pass,t1.pass_comment passComment,t6.id farmId
+      from
+      farm_item t1,farm_img t2,farm_category t3,farm_spec t4,server_user t5,farm t6,server_user t7
+      where
+      t1.category_id = t3.id and t3.farm_id = t6.id and t2.item_id = t1.id and t7.company_id = t6.id and t2.location = 1 and t4.item_id = t1.id and t1.status = 1 and t7.username = #{login}
+    </if>
+
+     <if test="search != null and search != '' and search == 'up'">
+       select distinct t1.id id,t2.url img,t1.name name,t4.price price,t4.unit unit,t3.name category,t1.state state,t1.description,t1.created_time createdTime,t1.pass pass,t1.pass_comment passComment,t6.id farmId
+       from
+       farm_item t1,farm_img t2,farm_category t3,farm_spec t4,server_user t5,farm t6,server_user t7
+       where
+       t1.category_id = t3.id and t3.farm_id = t6.id and t2.item_id = t1.id and t7.company_id = t6.id and t2.location = 1 and t4.item_id = t1.id and t1.status = 1 and t1.state = 1 and t1.pass = 1 and t7.username = #{login}
+     </if>
+
+    <if test="search != null and search != '' and search == 'down'">
+      select distinct t1.id id,t2.url img,t1.name name,t4.price price,t4.unit unit,t3.name category,t1.state state,t1.description,t1.created_time createdTime,t1.pass pass,t1.pass_comment passComment,t6.id farmId
+      from
+      farm_item t1,farm_img t2,farm_category t3,farm_spec t4,server_user t5,farm t6,server_user t7
+      where
+      t1.category_id = t3.id and t3.farm_id = t6.id and t2.item_id = t1.id and t7.company_id = t6.id and t2.location = 1 and t4.item_id = t1.id and t1.status = 1 and t1.state = -1 and t1.pass = 1 and t7.username = #{login}
+    </if>
+
+    <if test="search != null and search != '' and search == 'init'">
+      select distinct t1.id id,t2.url img,t1.name name,t4.price price,t4.unit unit,t3.name category,t1.state state,t1.description,t1.created_time createdTime,t1.pass pass,t1.pass_comment passComment,t6.id farmId
+      from
+      farm_item t1,farm_img t2,farm_category t3,farm_spec t4,server_user t5,farm t6,server_user t7
+      where
+      t1.category_id = t3.id and t3.farm_id = t6.id and t2.item_id = t1.id and t7.company_id = t6.id and t2.location = 1 and t4.item_id = t1.id and t1.status = 1  and t1.pass = 0 and t7.username = #{login}
+    </if>
+
+    <if test="search != null and search != '' and search == 'fail'">
+      select distinct t1.id id,t2.url img,t1.name name,t4.price price,t4.unit unit,t3.name category,t1.state state,t1.description,t1.created_time createdTime,t1.pass pass,t1.pass_comment passComment,t6.id farmId
+      from
+      farm_item t1,farm_img t2,farm_category t3,farm_spec t4,server_user t5,farm t6,server_user t7
+      where
+      t1.category_id = t3.id and t3.farm_id = t6.id and t2.item_id = t1.id and t7.company_id = t6.id and t2.location = 1 and t4.item_id = t1.id and t1.status = 1 and t1.pass = -1 and t7.username = #{login}
+    </if>
+
+  </select>
+
+  <select id="findById" resultMap="responseMap">
+    select t1.id, t1.name,t1.description,t1.category_id,t2.url,t2.location,t3.price,t3.unit
+    from farm_item t1,farm_img t2,farm_spec t3
+    where t1.id = t2.item_id and t1.id = t3.item_id and t1.id = #{id}
+  </select>
+
+    <update id="updateItem">
+        update farm_item set name = #{name},category_id = #{categoryId}, pass = #{pass},
+        oprerator = #{oprerator},description = #{description} where id = #{id}
+    </update>
+  <update id="itemUpOrDownShelf">
+    update farm_item set oprerator=#{operator},
+    <if test="operation != null and operation == 'up'">
+      state = 1
+    </if>
+    <if test="operation != null and operation == 'down'">
+      state = -1
+    </if>
+    where status = 1 and pass = 1 and id in
+    <foreach collection="ids" item="id" open="(" separator="," close=")" >
+      #{id}
+    </foreach>
+  </update>
+  <select id="findCountByFarmId" resultType="int">
+    select count(id)
+    from farm_item where category_id = #{categoryId} and status != -1
+  </select>
+
+    <select id="findFarmItemById" parameterType="String" resultMap="BaseResultMap">
+      select * from farm_item where id=#{id} and status =1
+    </select>
+
+  <select id="findFarmItemByIdPlus" parameterType="String" resultMap="BaseResultMap">
+    select * from farm_item where id=#{id} and status =1 and pass = 1 and state = 1
+  </select>
+
+  <select id="findUncheckById" resultMap="checkMap">
+    select t1.id,t1.name,t1.description,t2.url,t2.location,t3.name categotyName,t4.price,t4.unit
+    from farm_item t1 left join farm_img t2 on t2.item_id = t1.id left join farm_category t3 on t3.id = t1.category_id left join farm_spec t4 on t4.item_id = t1.id
+    where t1.pass = 0 and t1.id = #{id}
+  </select>
+  <update id="deleteById">
+    update farm_item set status = -1 where id = #{id}
+  </update>
+  <select id="findCheckHistory" resultType="com.rysh.module.farm.beans.FarmItemView">
+     <if test="search != null and search != '' and search == 'default'">
+       select name,description,pass_operator passOperator,pass_time passTime,pass_comment passComment,pass pass from farm_item where  pass_operator is not null and status = 1
+     </if>
+    <if test="search != null and search != '' and search == 'pass'">
+      select name,description,pass_operator passOperator,pass_time passTime,pass_comment passComment,pass pass from farm_item where  pass_operator is not null and status = 1 and pass = 1
+    </if>
+    <if test="search != null and search != '' and search == 'fail'">
+      select name,description,pass_operator passOperator,pass_time passTime,pass_comment passComment,pass pass from farm_item where  pass_operator is not null and status = 1 and pass = -1
+    </if>
+  </select>
+    <select id="findFarmItemByCategoryId" resultMap="BaseResultMap">
+      select * from farm_item where category_id=#{categoryId} and status = 1
+    </select>
+  <select id="findInnerContent" resultType="com.rysh.module.farm.beans.FarmItemView">
+     <if test="search != null and search != '' and search == 'default' ">
+       select distinct fi.id id,fg.url img,fi.name name,fs.price price,fs.unit unit,fc.name category,fi.state state,
+       fi.description,fi.created_time createdTime,fi.pass pass,fi.pass_comment passComment,f.id fiarmId
+       from farm f,farm_item fi,farm_img fg,farm_category fc,farm_spec fs
+       where fg.item_id = fi.id and fs.item_id = fi.id and fg.location = 1 and fi.category_id = fc.id and fc.farm_id = f.id
+       and fi.status = 1 and f.status != -1 and f.id = #{itemId}
+     </if>
+    <if test="search != null and search != '' and search == 'up' ">
+      select distinct fi.id id,fg.url img,fi.name name,fs.price price,fs.unit unit,fc.name category,fi.state state,
+      fi.description,fi.created_time createdTime,fi.pass pass,fi.pass_comment passComment,f.id fiarmId
+      from farm f,farm_item fi,farm_img fg,farm_category fc,farm_spec fs
+      where fg.item_id = fi.id and fs.item_id = fi.id and fg.location = 1 and fi.category_id = fc.id and fc.farm_id = f.id
+      and fi.status = 1 and f.status != -1 and f.id = #{itemId} and fi.state = 1 and pass = 1
+    </if>
+
+    <if test="search != null and search != '' and search == 'down' ">
+      select distinct fi.id id,fg.url img,fi.name name,fs.price price,fs.unit unit,fc.name category,fi.state state,
+      fi.description,fi.created_time createdTime,fi.pass pass,fi.pass_comment passComment,f.id fiarmId
+      from farm f,farm_item fi,farm_img fg,farm_category fc,farm_spec fs
+      where fg.item_id = fi.id and fs.item_id = fi.id and fg.location = 1 and fi.category_id = fc.id and fc.farm_id = f.id
+      and fi.status = 1 and f.status != -1 and f.id = #{itemId} and fi.state = -1 and pass = 1
+    </if>
+
+    <if test="search != null and search != '' and search == 'init' ">
+      select distinct fi.id id,fg.url img,fi.name name,fs.price price,fs.unit unit,fc.name category,fi.state state,
+      fi.description,fi.created_time createdTime,fi.pass pass,fi.pass_comment passComment,f.id fiarmId
+      from farm f,farm_item fi,farm_img fg,farm_category fc,farm_spec fs
+      where fg.item_id = fi.id and fs.item_id = fi.id and fg.location = 1 and fi.category_id = fc.id and fc.farm_id = f.id
+      and fi.status = 1 and f.status != -1 and f.id = #{itemId}  and pass = 0
+    </if>
+
+    <if test="search != null and search != '' and search == 'fail' ">
+      select distinct fi.id id,fg.url img,fi.name name,fs.price price,fs.unit unit,fc.name category,fi.state state,
+      fi.description,fi.created_time createdTime,fi.pass pass,fi.pass_comment passComment,f.id fiarmId
+      from farm f,farm_item fi,farm_img fg,farm_category fc,farm_spec fs
+      where fg.item_id = fi.id and fs.item_id = fi.id and fg.location = 1 and fi.category_id = fc.id and fc.farm_id = f.id
+      and fi.status = 1 and f.status != -1 and f.id = #{itemId} and pass = -1
+    </if>
+  </select>
+    <select id="findFarmItemByIdToOrders" resultMap="BaseResultMap">
+      select * from farm_item where id=#{id}
+    </select>
+
+
+</mapper>

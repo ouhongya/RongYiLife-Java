@@ -1,0 +1,113 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://rm-2vcdkg4m03d5rn392.mysql.cn-chengdu.rds.aliyuncs.com/dev_rys?useUnicode=true&characterEncoding=UTF-8&useSSL=false
+    username: developer
+    password: '!Dev&2019'
+  redis:
+    host: 192.168.0.1
+    port: 6379
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
+mybatis:
+  type-aliases-package: com.rysh.module.community.beans
+  mapper-locations: model/*/mapper/*Mapper.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+
+server:
+  port: 8088
+  connection-timeout: 10000
+  tomcat:
+    uri-encoding: utf-8
+    max-http-post-size: 20MB
+    max-threads: 500
+    max-connections: 10000
+    accept-count: 200
+    basedir: /usr/tomcat/tmp
+  undertow:
+    io-threads: 5
+    worker-threads: 50
+  compression:
+      enabled: true
+      mime-types: application/json
+      min-response-size: 2KB
+
+
+pagehelper:
+  helperDialect: mysql
+  reasonable: true
+  supportMethodsArguments: true
+  pageSizeZero: true
+  params: count=countSql
+
+#微信支付配置
+wxpay:
+  appId: wxd4de417c625a462c
+  mchId: 1561636151
+  key: 99F3F626051011EA99A300163E01543F
+  body: 蓉意生活
+  notify: https://dev.qingwaw.com/pay/wxpay/callback110
+
+result:
+  #自营商城id
+  tagId: 0d85e2b719777789b191856aea1372AA
+  #短信签名
+  signer: 蓉意生活
+  #短信验证码模板id
+  codeTemplateId: SMS_175420332
+  #短信提醒发货模板id
+  msgTemplateId: SMS_177246737
+  #积分折扣比例
+  discountRate: 10
+  #消费返积分比例
+  consumeRate: 1
+  #使用积分的最低消费
+  minimums: 30
+
+  accessKeyId: LTAI4FcrnqtMensaw71MfU1G
+  accessKeySecret: IcFoKPARchCWu19xqycqFO1O4Od052
+  bucket: rysh
+  folder: images/
+  #订单过期时间  单位：秒
+  ordersExpirationTime: 30
+  #验证码过期时间
+  codeExpirationTime: 900
+  #限制点击提醒发货时间
+  remindTime: 86400
+  #手机登陆  token过期时间  单位：毫秒
+  clientExpirationTime: 31536000000000
+  #后台登陆  token过期时间
+  serverExpirationTime: 10800000
+  #自营商城发货地址
+  selfDefaultAddress: 蓉意生活官方认证发货
+  #自营商城头像url
+  selfHeadUrl: https://rysh.oss-cn-chengdu.aliyuncs.com/images/b79dbb107bb24e2b98347060827ad2ed{047E0652-9A39-A2C6-E14E-B4D24D0F271A}.png
+  #自动确认收货时间  单位:秒
+  confirmReceiptTime: 1036800
+#快递
+courier:
+  圆通快递,
+  顺丰速运,
+  申通快递,
+  中国邮政,
+  韵达快递,
+  中通快递,
+  天天快递,
+  百世汇通,
+  宅急送快递
+#社区便民功能栏
+ConvenientCommunity:
+  微社区,
+  周边商铺
+
+
+
+
+

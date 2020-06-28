@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rysh.module.farm.mapper.FarmMapper">
+
+  <resultMap id="BaseResultMap" type="com.rysh.module.farm.beans.Farm">
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="address" jdbcType="VARCHAR" property="address" />
+    <result column="score" jdbcType="INTEGER" property="score" />
+    <result column="created_time" jdbcType="TIMESTAMP" property="createdTime" />
+    <result column="lasted_update_time" jdbcType="TIMESTAMP" property="lastedUpdateTime" />
+  </resultMap>
+
+
+  <insert id="addFarm" useGeneratedKeys="true" keyProperty="id" parameterType="com.rysh.module.farm.beans.Farm">
+    <selectKey keyProperty="id" keyColumn="id" resultType="String" order="BEFORE">
+      select upper(replace(uuid(), '-', ''))
+    </selectKey>
+    insert into farm (`id`,`name`,`address`,`score`,`created_time`,status,area_id,default_sort)
+        value (#{id},#{name},#{address},#{score},#{createdTime},#{status},#{areaId},#{defaultSort})
+  </insert>
+  
+  <resultMap id="farmIndex" type="com.rysh.module.farm.beans.FarmAndUser">
+    <result property="id" column="id" />
+    <result property="address" column="address" />
+    <result property="name" column="name" />
+    <result property="createdTime" column="created_time" />
+    <result property="score" column="score" />
+    <result property="areaId" column="areaId" />
+    <result property="cityId" column="cityId" />
+    <result property="intro" column="intro" />
+    <result property="contactNum" column="contact_num" />
+    <result property="freight" column="freight" />
+    <result property="status" column="status" />
+    <result property="defaultSort" column="default_sort" />
+    <collection property="tags" ofType="com.rysh.module.farm.beans.Tag" >
+      <result property="id" column="tagId" />
+      <result property="name" column="tagName" />
+    </collection>
+  </resultMap>
+
+  <select id="findAll" resultMap="farmIndex">
+    <!--select t1.created_time,t1.name,t1.address,t1.score,t1.id ,t2.username
+    from farm t1 , server_user t2
+    where t1.owner_id = t2.id-->
+    select t1.created_time,t1.name,t1.address,t1.score,t1.id from farm t1 where status != -1
+  </select>
+  <select id="findAllPlus" resultMap="farmIndex">
+    <!--select t1.created_time,t1.name,t1.address,t1.score,t1.id ,t2.username
+    from farm t1 , server_user t2
+    where t1.owner_id = t2.id-->
+    select t1.created_time,t1.name,t1.address,t1.score,t1.id from farm t1 where status = 1
+    <if test="search != null and search != ''">
+      and (t1.name like "%"#{search}"%")
+    </if>
+  </select>
+
+  <select id="findOneById" resultMap="farmIndex" parameterType="String">
+    select f.*,a.id areaId,c.id cityId,t.name tagName,t.id tagId
+    from farm f left join area a on f.area_id = a.id left join city c on a.city_id = c.id left join tag_entity te on te.entity_id = f.id left join  tag t on te.tag_id = t.id and t.status = 1
+    where f.status != -1 and f.id = #{id}
+  </select>
+
+  <update id="updateById" parameterType="com.rysh.module.farm.beans.Farm">
+    update farm set name = #{name},address = #{address},area_id=#{areaId},default_sort = #{defaultSort} where id = #{id}
+  </update>
+
+  <update id="updateStateById">
+    update farm set status = -1 where id = #{id}
+  </update>
+  <select id="findByCondition" resultMap="farmIndex">
+    select
+    distinct f.*
+    from
+        server_user u
+    right join farm f on
+        u.company_id = f.id
+    where
+	f.status != -1
+	<if test="condition != null and condition != ''">
+      and (f.name like "%"#{condition}"%" or f.address like "%"#{condition}"%" or u.true_name like "%"#{condition}"%" or u.username like "%"#{condition}"%")
+    </if>
+  </select>
+  <select id="findFarmByLogin" resultMap="BaseResultMap">
+     <if test="itemId != null  ">
+        select * from farm where id = #{itemId} and status != -1
+      </if>
+
+      <if test="itemId == null ">
+        select distinct t1.*
+        from farm t1,server_user t2
+        where t2.company_id = t1.id and t2.id = #{login} and t1.status != -1 and t2.is_insider = 2
+      </if>
+  </select>
+  <update id="updateFarmInfo">
+    update farm set contact_num = #{contactNum},intro = #{intro} ,address =#{address},freight = #{freight} where id = #{id}
+  </update>
+    <select id="findDisplayInfo" resultType="com.rysh.module.farm.beans.DisplayInfo">
+      select f.* from farm f,server_user s
+      where f.id = s.company_id and s.username = #{login}
+    </select>
+  <update id="updateScoreById">
+    update farm set score=score+#{usedSorce} where id=#{marketId}
+  </update>
+    <select id="hasCoverImg" resultType="java.lang.Integer">
+        select count(id) from farm_album where status = 1 and farm_id = #{id} and is_cover = 1
+    </select>
+    <select id="findDisplayInfoById" resultType="com.rysh.module.farm.beans.DisplayInfo">
+        select * from farm f where  f.id = #{id}
+    </select>
+    <update id="updateStatus">
+        <if test="operation =='up' ">
+          update farm set status = 1 where id = #{id}
+        </if>
+        <if test="operation =='down' ">
+          update farm set status = 0 where id = #{id}
+        </if>
+    </update>
+  <select id="findOneByIdToOrders" resultMap="BaseResultMap">
+    select * from farm where id=#{farmId}
+  </select>
+    <select id="findImgCountById" resultType="int">
+      select count(id) from farm_album where farm_id = #{id} and status = 1 and is_cover = 0
+    </select>
+  <select id="findAlbumById" resultType="com.rysh.module.farm.beans.FarmAlbum">
+    select * from farm_album where id = #{resultId}
+  </select>
+  <select id="findAlbumCover" resultType="com.rysh.module.farm.beans.FarmAlbum">
+    select * from farm_album where farm_id = #{id} and status = 1 and is_cover = 1
+  </select>
+  <update id="deleteAlbumById">
+    update farm_album set status = -1 where id = #{id}
+  </update>
+  <insert id="addAlbum">
+    insert into farm_album (id, url, is_cover, farm_id, created_time, status) values (#{id},#{url},#{isCover},#{farmId},#{createdTime},#{status})
+  </insert>
+  <select id="findfarmIdByAlbumId" resultType="java.lang.String">
+    select farm_id from farm_album where id = #{id}
+  </select>
+  <select id="findAllAlbum" resultType="com.rysh.module.farm.beans.FarmAlbum">
+    select * from farm_album where status = 1 and farm_id = #{id} order by created_time asc
+  </select>
+  <update id="updateSort">
+    update farm set default_sort = #{sort} where id = #{id}
+  </update>
+
+
+</mapper>
