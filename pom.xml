@@ -142,7 +142,7 @@
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi</artifactId><!--poi-ooxml-->
-            <version>4.0.1</version><!--3.17-->
+            <version>4.1.1</version><!--3.17-->
         </dependency>
 
     </dependencies>
